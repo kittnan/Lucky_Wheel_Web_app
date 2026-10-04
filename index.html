@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="icon" href="data:,">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0B5D3B">
 <title>Lucky Wheel – Grand Prize Draw</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:wght@600;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="window.__xlsxFallback=true;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s);"></script>
+<link rel="stylesheet" href="fonts/fonts.css">
+<script src="vendor/xlsx.full.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s);"></script>
 <style>
 /* =====================================================================
    THEME TOKENS
    ===================================================================== */
 :root{
-  --felt:#0B5D3B; --felt-d:#06361f; --gold:#D4AF37; --gold-hi:#fbe8a0; --gold-lo:#8a6a12;
+  --felt:#0B5D3B; --felt-d:#06361f; --felt-hi:#0f7a4d; --felt-lo:#04241a; --card-b:rgba(8,26,17,.9); --gold:#D4AF37; --gold-hi:#fbe8a0; --gold-lo:#8a6a12;
   --wine:#8B0000; --ink:#0A0A0A; --cream:#f6f0dc; --txt:#f3ead0; --muted:#b9ad86;
   --gold-grad:linear-gradient(145deg,#fff1b8 0%,#e8c657 22%,#D4AF37 46%,#8f6b10 72%,#e9c964 100%);
   --wheel:clamp(290px,min(calc(50vw - 70px),calc(100vh - 190px)),1100px);
@@ -22,13 +22,16 @@
   --head:'Cinzel','Playfair Display','Kanit',serif;
   --body:'Kanit','Prompt',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
+body[data-theme=royal]{--felt:#0d3566;--felt-hi:#1a5aa3;--felt-lo:#04132b;--card-b:rgba(6,16,36,.92)}
+body[data-theme=crimson]{--felt:#6b0f26;--felt-hi:#99203d;--felt-lo:#260610;--card-b:rgba(34,6,14,.92)}
+body[data-theme=midnight]{--felt:#202020;--felt-hi:#3d3d3d;--felt-lo:#050505;--card-b:rgba(6,6,6,.92)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
 body{
   font-family:var(--body); color:var(--txt); font-weight:400;
   background:
     radial-gradient(ellipse at 50% 30%,rgba(255,240,180,.20),transparent 55%),
-    radial-gradient(ellipse at center,#0f7a4d 0%,#0B5D3B 45%,#04241a 100%);
+    radial-gradient(ellipse at center,var(--felt-hi) 0%,var(--felt) 45%,var(--felt-lo) 100%);
   background-attachment:fixed;
   overflow-x:hidden;
 }
@@ -76,7 +79,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 .btn.red{background:linear-gradient(180deg,#b01616,#5e0505);border-color:#d4af37;color:#fff}
 .btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
 .btn.ico{padding:9px 12px}
-.card{background:linear-gradient(180deg,rgba(10,10,10,.84),rgba(8,26,17,.9));border:1px solid rgba(212,175,55,.55);border-radius:14px;
+.card{background:linear-gradient(180deg,rgba(10,10,10,.84),var(--card-b));border:1px solid rgba(212,175,55,.55);border-radius:14px;
   box-shadow:0 0 0 1px #000,0 12px 40px rgba(0,0,0,.55),inset 0 0 30px rgba(0,0,0,.5)}
 #stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
 .stat{padding:12px 16px;text-align:center}
@@ -272,6 +275,22 @@ body.present #app{padding-top:16px}
 .imp-sum{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-size:14px}
 .imp-sum b{color:var(--gold-hi)}
 ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-height:150px;overflow:auto}
+
+.brand{display:flex;align-items:center;gap:16px;min-width:0}
+#evLogo{height:clamp(44px,6vw,76px);max-width:200px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
+.logo h1{overflow-wrap:anywhere}
+.hub img{width:78%;height:78%;object-fit:contain;border-radius:50%}
+.odds{padding:12px 14px}
+.odds-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-family:var(--head);letter-spacing:.14em;font-size:13px;color:var(--gold)}
+.odds-h .secure{font-family:var(--body);letter-spacing:0;font-size:11.5px;color:#7fe0b0;border:1px solid rgba(63,196,137,.5);border-radius:99px;padding:2px 9px}
+#oddsList{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:4px 18px}
+.od{display:flex;align-items:center;gap:8px;font-size:clamp(12.5px,1vw,15px);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07);min-width:0}
+.od .sw{width:13px;height:13px;flex:none}
+.od .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.od .q{color:var(--muted);font-size:.85em;white-space:nowrap}
+.od b{color:var(--gold-hi);font-variant-numeric:tabular-nums;min-width:4.6em;text-align:right}
+.od.out{opacity:.45}.od.out b{color:#999}
+.odds-f{margin-top:7px;font-size:11.5px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.spot,.mote{animation:none}}
 </style>
 </head>
@@ -281,7 +300,7 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
 
 <div id="app">
   <header class="top">
-    <div class="logo"><h1>LUCKY WHEEL</h1><small>Grand Prize Draw</small></div>
+    <div class="brand"><img id="evLogo" alt="" hidden><div class="logo"><h1 id="evTitle">LUCKY WHEEL</h1><small id="evSub">Grand Prize Draw</small></div></div>
     <div class="tools">
       <button class="btn ico" id="btnSound" data-allow title="Toggle sound">🔊 Sound</button>
       <button class="btn ico" id="btnFull" data-allow title="Presentation mode">⛶ Full Screen</button>
@@ -302,7 +321,7 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
           <div class="rim"></div><div class="band"></div><div id="bulbs"></div><div class="discRing"></div>
           <div class="wheelRot" id="wheelRot"><canvas id="wheelCv" width="1100" height="1100"></canvas><canvas id="wheelHl" width="1100" height="1100"></canvas></div>
           <div class="gloss" id="gloss"></div><div class="gloss2"></div>
-          <div class="hub"><span>★</span></div>
+          <div class="hub"><span id="hubStar">★</span><img id="hubLogo" alt="" hidden></div>
           <div class="pointer" id="pointer">
             <svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><defs>
               <linearGradient id="gp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".45" stop-color="#D4AF37"/><stop offset="1" stop-color="#7a5808"/></linearGradient>
@@ -325,6 +344,12 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
           <div class="lever-col"><div class="lever-slot"></div><div class="lever-base"></div>
             <div class="lever" id="lever" role="button" tabindex="0" aria-label="Pull lever to draw" title="Pull the lever!"></div></div>
         </div>
+      </div>
+
+      <div class="card odds" id="odds">
+        <div class="odds-h"><span>PRIZE ODDS · LIVE</span><span class="row" style="gap:6px"><span class="secure">🔒 crypto.getRandomValues</span><button class="btn sm" id="btnOddsTest" title="Simulate 100,000 spins with the real random function">🧪 Verify</button></span></div>
+        <div id="oddsList"></div>
+        <div class="odds-f">Chance per spin, right now. When a prize runs out the others are rescaled in the same proportion. Every spin is independent — no pity, no hidden adjustments.</div>
       </div>
 
       <div class="card ctrl">
@@ -384,8 +409,23 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
         <div class="card"><b>Import participants</b><p>Excel columns: Employee ID | Full Name | Department</p>
           <button class="btn" id="btnImpPeople">⬆ Import Participants</button><button class="btn" id="btnTplPeople">⬇ Download Template</button></div>
         <div class="card"><b>Settings</b>
-          <label class="chk"><input type="checkbox" id="chkQuick"> Quick spin (short animations)</label>
+          <label class="t" style="font-size:12px;color:var(--gold)" for="selSpeed">Animation length</label>
+          <select id="selSpeed"><option value="quick">Quick (about 3 s)</option><option value="normal">Normal (about 8 s)</option><option value="long">Dramatic (about 13 s)</option></select>
           <label class="chk"><input type="checkbox" id="chkSound2"> Sound effects</label></div>
+        <div class="card"><b>Appearance &amp; Event</b>
+          <input id="inTitle" maxlength="40" placeholder="Event title (e.g. ANNUAL PARTY 2026)">
+          <input id="inSub" maxlength="60" placeholder="Subtitle (e.g. Grand Prize Draw)">
+          <select id="selTheme"><option value="green">Theme: Casino Green</option><option value="royal">Theme: Royal Blue</option><option value="crimson">Theme: Crimson</option><option value="midnight">Theme: Midnight Black</option></select>
+          <div class="row"><button class="btn" id="btnLogo">🖼 Upload Logo</button><button class="btn" id="btnLogoDel">Remove</button></div>
+          <p>Logo appears in the header and on the wheel hub (PNG with transparent background looks best).</p>
+          <input type="file" id="logoInput" accept="image/*" class="hidden"></div>
+        <div class="card"><b>Backup &amp; Restore</b>
+          <p>Your data lives in this browser. Keep a copy before the event.</p>
+          <div class="row"><button class="btn gold" id="btnBackup">⬇ Download Backup</button><button class="btn" id="btnRestore">⬆ Restore File</button></div>
+          <button class="btn" id="btnSnaps">🕘 Auto-saved Snapshots</button>
+          <label class="chk"><input type="checkbox" id="chkAutoBackup"> Download a backup file after every confirmed draw</label>
+          <input type="file" id="backupInput" accept=".json,application/json" class="hidden">
+          <p id="offlineState">Offline mode: checking…</p></div>
         <div class="card"><b>Reset</b><p>Clear results only, or erase everything.</p>
           <button class="btn" id="btnResetResults">↺ Reset Draw Results</button>
           <button class="btn red" id="btnResetAll">🗑 Erase All Data</button></div>
@@ -484,8 +524,8 @@ const pad = n => String(n).padStart(2, '0');
 const fmtDate = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
 const todayStr = () => fmtDate(Date.now()).slice(0, 10);
 const rand01 = () => Engine.randInt(1000000) / 1000000;      // visual jitter only – never affects results
-let QUICK = false;
-const T = ms => QUICK ? ms * 0.35 : ms;
+let SPD = 1;                      // animation time multiplier (quick .35 / normal 1 / dramatic 1.6)
+const T = ms => ms * SPD;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function toast(msg, type = 'info', ms) {
@@ -525,12 +565,13 @@ const LS_KEY = 'luckyWheel.casino.v1';
 const PALETTE = ['#8B0000', '#141414', '#0B5D3B', '#a31515', '#222222', '#0e7a4d'];
 const S = {
   prizes: [], participants: [], history: [], nextPid: 1, skip: new Set(),
-  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, groupSize: 10, prizeChoice: 'random' }
+  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false }
 };
 let storageWarned = false;
+const stateObj = () => ({ v: 1, prizes: S.prizes, participants: S.participants, history: S.history, nextPid: S.nextPid, settings: S.settings });
 function save() {
   try {
-    localStorage.setItem(LS_KEY, JSON.stringify({ v: 1, prizes: S.prizes, participants: S.participants, history: S.history, nextPid: S.nextPid, settings: S.settings }));
+    localStorage.setItem(LS_KEY, JSON.stringify(stateObj()));
   } catch (e) { if (!storageWarned) { storageWarned = true; toast('Could not save to browser storage — data will be lost on refresh.', 'warn'); } }
 }
 function sanitizeLoaded(d) {
@@ -559,6 +600,12 @@ function sanitizeLoaded(d) {
   });
   out.nextPid = Math.max(mx + 1, Number(d.nextPid) || 1);
   out.settings = Object.assign({}, S.settings, d.settings && typeof d.settings === 'object' ? d.settings : {});
+  const st = out.settings;
+  if (!['quick', 'normal', 'long'].includes(st.speed)) st.speed = 'normal';
+  if (!['green', 'royal', 'crimson', 'midnight'].includes(st.theme)) st.theme = 'green';
+  st.title = String(st.title ?? '').slice(0, 40); st.subtitle = String(st.subtitle ?? '').slice(0, 60);
+  if (typeof st.logo !== 'string' || !/^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,/.test(st.logo) || st.logo.length > 400000) st.logo = '';
+  st.autoBackup = !!st.autoBackup;
   return out;
 }
 // Deterministic demo data
@@ -915,7 +962,7 @@ const Slot = (() => {
       const dur = [2400, 3300, 4200].map(T);
       let done = 0;
       reels.forEach((r, k) => {
-        const N = Math.round((26 + k * 12) * (QUICK ? .6 : 1));
+        const N = Math.round((26 + k * 12) * (SPD < 1 ? .6 : 1));
         const fill = () => pool.length ? r.def.val(pool[Engine.randInt(pool.length)]) : '—';
         const items = [fill(), r.cur];
         for (let i = 0; i < N; i++) items.push(fill());
@@ -1080,7 +1127,7 @@ function showImportPreview(kind, res) {
         const have = new Set(S.participants.map(p => p.id));
         v.forEach(r => { if (have.has(r.id)) { dup++; return; } have.add(r.id); S.participants.push(r); added++; });
       }
-      S.skip.clear(); save(); refreshAll();
+      snap('Before import'); S.skip.clear(); save(); refreshAll(); snap('Import ' + kind);
       toast(`Imported ${added} ${isP ? 'prizes' : 'participants'}${dup ? ` (${dup} duplicates skipped)` : ''}.`, 'success');
     } }] });
 }
@@ -1105,6 +1152,10 @@ function renderPrizes() {
     <td class="num">${p.qty} / ${p.total}</td><td class="num">${fmtRate(p.rate)}%</td><td class="num">${p.qty > 0 && live[i] > 0 ? '<b style="color:var(--gold-hi)">' + fmtRate(live[i]) + '%</b>' : '—'}</td>
     <td style="white-space:nowrap;text-align:right"><button class="btn sm" data-edit="${p.id}">Edit</button> <button class="btn sm red" data-del="${p.id}">✕</button></td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No prizes yet. Add one or import an Excel file.</td></tr>';
+  $('#oddsList').innerHTML = S.prizes.length ? S.prizes.map((p, i) => {
+    const out = p.qty <= 0 || live[i] <= 0;
+    return `<div class="od${out ? ' out' : ''}"><span class="sw" style="background:${esc(p.color)}"></span><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span><span class="q">${p.qty <= 0 ? 'sold out' : p.qty + ' left'}</span><b>${out ? '—' : fmtRate(live[i]) + '%'}</b></div>`;
+  }).join('') : '<div class="od"><span class="nm">No prizes yet</span></div>';
   const sum = sumRates(), b = $('#rateBanner');
   if (!S.prizes.length) b.innerHTML = '';
   else if (sum <= 0) b.innerHTML = '<div class="banner err"><span>⚠ Total rate is 0% — no prize can be drawn. Set a rate above 0 for at least one prize.</span></div>';
@@ -1139,9 +1190,10 @@ function renderControls() {
   $('#groupWrap').classList.toggle('hidden', S.settings.mode !== 'group');
   $('#groupSize').value = S.settings.groupSize;
   $('#chkExclude').checked = S.settings.exclude;
-  $('#chkQuick').checked = S.settings.quick; $('#chkSound2').checked = S.settings.sound;
+  $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup;
+  applyBrand();
   $('#btnSound').textContent = S.settings.sound ? '🔊 Sound' : '🔇 Muted';
-  QUICK = !!S.settings.quick;
+  SPD = S.settings.quick ? .35 : ({ quick: .35, normal: 1, long: 1.6 }[S.settings.speed] || 1);
 }
 function refreshAll() { renderPrizes(); renderDeptFilter(); renderPeople(); renderHistory(); renderStats(); renderControls(); Wheel.draw(); }
 
@@ -1277,7 +1329,8 @@ function groupCard(persons, prize, effRate, getMore) {
 function commit(prize, persons, effRate) {
   const ts = Date.now(); let n = 0;
   persons.forEach(p => { if (prize.qty <= 0) return; S.history.push({ ts: ts + n, empId: p.id, name: p.name, dept: p.dept || '', prize: prize.name, prizeId: prize.id, rate: effRate }); prize.qty--; n++; });
-  S.skip.clear(); save(); refreshAll();
+  S.skip.clear(); save(); refreshAll(); snap('Draw confirmed: ' + prize.name);
+  if (S.settings.autoBackup) downloadBackup(true);
   return n;
 }
 
@@ -1352,6 +1405,88 @@ async function startDraw() {
 }
 
 /* =====================================================================
+   12b. BRANDING · BACKUP · OFFLINE
+   ===================================================================== */
+function applyBrand() {
+  const st = S.settings, t = st.title.trim() || 'LUCKY WHEEL';
+  $('#evTitle').textContent = t; $('#evSub').textContent = st.subtitle; $('#evSub').classList.toggle('hidden', !st.subtitle.trim());
+  document.title = t + ' – Prize Draw'; document.body.dataset.theme = st.theme;
+  const has = !!st.logo;
+  $('#evLogo').hidden = !has; $('#hubLogo').hidden = !has; $('#hubStar').hidden = has;
+  if (has) { if ($('#evLogo').getAttribute('src') !== st.logo) { $('#evLogo').src = st.logo; $('#hubLogo').src = st.logo; } }
+  else { $('#evLogo').removeAttribute('src'); $('#hubLogo').removeAttribute('src'); }
+  if ($('#inTitle') !== document.activeElement) $('#inTitle').value = st.title;
+  if ($('#inSub') !== document.activeElement) $('#inSub').value = st.subtitle;
+  $('#selTheme').value = st.theme;
+  const mt = document.querySelector('meta[name=theme-color]'); if (mt) mt.content = { green: '#0B5D3B', royal: '#0d3566', crimson: '#6b0f26', midnight: '#202020' }[st.theme];
+}
+function fileToLogo(file) {
+  return new Promise((res, rej) => {
+    if (!/^image\//.test(file.type)) return rej(new Error('Please choose an image file (PNG, JPG, WebP or SVG).'));
+    if (file.size > 8 * 1024 * 1024) return rej(new Error('That image is too large (max 8 MB).'));
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 320 / Math.max(img.width, img.height, 1)), w = Math.max(1, Math.round((img.width || 320) * k)), h = Math.max(1, Math.round((img.height || 320) * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('That image could not be read.')); };
+    img.src = url;
+  });
+}
+
+const SNAP_KEY = 'luckyWheel.snaps.v1';
+const readSnaps = () => { try { const a = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+function snap(reason) {                    // rolling safety copies inside the browser (last 8)
+  const entry = { ts: Date.now(), reason, data: stateObj() };
+  let list = readSnaps(); list.push(entry); list = list.slice(-8);
+  for (let tries = 0; tries < 6; tries++) {
+    try { localStorage.setItem(SNAP_KEY, JSON.stringify(list)); return; }
+    catch (e) { if (list.length <= 1) return; list.shift(); }
+  }
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function downloadBackup(quiet) {
+  const d = new Date(), stamp = `${todayStr()}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+  const blob = new Blob([JSON.stringify({ app: 'lucky-wheel', version: 1, exportedAt: d.toISOString(), state: stateObj() }, null, 1)], { type: 'application/json' });
+  downloadBlob(blob, `Lucky_Wheel_Backup_${stamp}.json`);
+  if (!quiet) toast('Backup file downloaded. Keep it somewhere safe.', 'success');
+}
+function adoptState(c, why) {
+  snap('Before ' + why);
+  S.prizes = c.prizes; S.participants = c.participants; S.history = c.history; S.nextPid = c.nextPid; S.settings = c.settings; S.skip.clear();
+  save(); snap(why); refreshAll();
+}
+const summary = c => `${c.prizes.length} prizes · ${c.participants.length} participants · ${c.history.length} winners`;
+async function restoreFile(file) {
+  let raw; try { raw = JSON.parse(await file.text()); } catch (e) { return toast('That file is not a valid backup (could not read JSON).', 'error'); }
+  const c = sanitizeLoaded(raw && raw.state ? raw.state : raw);
+  if (!c || (!c.prizes.length && !c.participants.length && !c.history.length)) return toast('That backup file contains no data.', 'error');
+  if (await ask('Restore backup', `Replace everything in this browser with the backup?\n${summary(c)}`, 'Restore')) { adoptState(c, 'restore file'); toast('Backup restored.', 'success'); }
+}
+function showSnaps() {
+  const list = readSnaps().reverse();
+  const rows = list.map((e, i) => { const c = sanitizeLoaded(e.data); return c ? `<tr><td>${fmtDate(e.ts)}</td><td>${esc(e.reason)}</td><td>${esc(summary(c))}</td><td><button class="btn sm gold" data-i="${i}">Restore</button></td></tr>` : ''; }).join('');
+  const m = openModal({ title: 'Auto-saved Snapshots', html: list.length ? `<p style="margin:0 0 8px;color:var(--muted);font-size:13px">A copy is saved automatically after each confirmed draw, void, import and reset (last 8 kept in this browser).</p><div class="tbl-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Contents</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p>No snapshots yet — they appear after your first confirmed draw.</p>', buttons: [{ label: 'Close' }] });
+  m.el.addEventListener('click', async ev => {
+    const b = ev.target.closest('button[data-i]'); if (!b) return;
+    const e = list[Number(b.dataset.i)], c = e && sanitizeLoaded(e.data); if (!c) return;
+    if (await ask('Restore snapshot', `Go back to ${fmtDate(e.ts)}?\n${summary(c)}`, 'Restore')) { m.close(); adoptState(c, 'restore snapshot'); toast('Snapshot restored.', 'success'); }
+  });
+}
+function initOffline() {
+  const el = $('#offlineState');
+  if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) { el.textContent = 'Offline mode: available when opened from the website (https).'; return; }
+  navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => {
+    el.textContent = '✔ Offline ready — works without internet on this device.';
+    try { if (!localStorage.getItem('luckyWheel.offlineToast')) { localStorage.setItem('luckyWheel.offlineToast', '1'); toast('App saved for offline use ✔', 'success'); } } catch (e) { /* ignore */ }
+  }).catch(() => { el.textContent = 'Offline mode could not be enabled in this browser.'; });
+}
+
+/* =====================================================================
    13. EVENT WIRING
    ===================================================================== */
 // While a draw is running, swallow clicks on everything inside #app except items flagged data-allow
@@ -1367,7 +1502,7 @@ $('#modeSeg').onclick = e => { const b = e.target.closest('button[data-mode]'); 
 $('#prizeChoice').onchange = e => { if (busy) return; S.settings.prizeChoice = e.target.value; save(); };
 $('#groupSize').onchange = e => { const v = Math.floor(Number(e.target.value)); S.settings.groupSize = isFinite(v) && v >= 1 ? v : 10; e.target.value = S.settings.groupSize; save(); };
 $('#chkExclude').onchange = e => { if (busy) { e.target.checked = S.settings.exclude; return; } S.settings.exclude = e.target.checked; save(); renderPeople(); renderStats(); };
-$('#chkQuick').onchange = e => { S.settings.quick = e.target.checked; QUICK = e.target.checked; save(); };
+$('#selSpeed').onchange = e => { S.settings.speed = e.target.value; S.settings.quick = false; save(); renderControls(); };
 function setSound(v) { S.settings.sound = v; save(); renderControls(); if (v) { Sfx.unlock(); Sfx.pop(); } }
 $('#chkSound2').onchange = e => setSound(e.target.checked);
 $('#btnSound').onclick = () => setSound(!S.settings.sound);
@@ -1393,6 +1528,7 @@ $('#btnTplPrize').onclick = templatePrizes;
 $('#btnTplPeople').onclick = templatePeople;
 $('#btnExport').onclick = exportResults;
 $('#btnSim').onclick = runSimulation;
+$('#btnOddsTest').onclick = () => { if (!busy) runSimulation(); };
 $('#p-prizes').addEventListener('click', async e => {
   const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
   if (e.target.closest('#btnBalance')) {
@@ -1425,19 +1561,33 @@ $('#p-winners').addEventListener('click', async e => {
   const i = Number(b.dataset.void), h = S.history[i]; if (!h) return;
   if (await ask('Void result', `Remove ${h.name} → ${h.prize} from the results? The prize returns to stock and the person can be drawn again.`, 'Void')) {
     S.history.splice(i, 1); const p = S.prizes.find(x => x.id === h.prizeId && x.name === h.prize); if (p && p.qty < p.total) p.qty++;
-    save(); refreshAll();
+    save(); refreshAll(); snap('Void result');
   }
 });
 $('#btnResetResults').onclick = async () => {
   if (!(await ask('Reset draw results', 'Clear all winners and restore every prize to its full quantity? Prizes and participants are kept.', 'Reset'))) return;
-  S.history = []; S.prizes.forEach(p => p.qty = p.total); S.skip.clear(); save(); refreshAll(); toast('Draw results cleared.', 'success');
+  snap('Before reset results'); S.history = []; S.prizes.forEach(p => p.qty = p.total); S.skip.clear(); save(); refreshAll(); toast('Draw results cleared.', 'success');
 };
 $('#btnResetAll').onclick = async () => {
   if (!(await ask('Erase all data', 'This permanently erases all prizes, participants and results, and restores the demo data. Continue?', 'Erase Everything'))) return;
   try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
-  const keep = { sound: S.settings.sound }; loadDemo(); Object.assign(S.settings, keep); save(); refreshAll(); toast('All data reset to the demo set.', 'success');
+  snap('Before erase all'); const keep = { sound: S.settings.sound }; loadDemo(); Object.assign(S.settings, keep); save(); refreshAll(); toast('All data reset to the demo set.', 'success');
 };
 document.addEventListener('pointerdown', () => Sfx.unlock(), { once: true });
+$('#inTitle').oninput = e => { S.settings.title = e.target.value; applyBrand(); save(); };
+$('#inSub').oninput = e => { S.settings.subtitle = e.target.value; applyBrand(); save(); };
+$('#selTheme').onchange = e => { S.settings.theme = e.target.value; applyBrand(); save(); };
+$('#btnLogo').onclick = () => $('#logoInput').click();
+$('#logoInput').onchange = async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  try { S.settings.logo = await fileToLogo(f); applyBrand(); save(); toast('Logo updated.', 'success'); } catch (err) { toast(err.message, 'error'); }
+};
+$('#btnLogoDel').onclick = () => { S.settings.logo = ''; applyBrand(); save(); };
+$('#btnBackup').onclick = () => downloadBackup(false);
+$('#btnRestore').onclick = () => $('#backupInput').click();
+$('#backupInput').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f && !busy) restoreFile(f); };
+$('#btnSnaps').onclick = showSnaps;
+$('#chkAutoBackup').onchange = e => { S.settings.autoBackup = e.target.checked; save(); if (e.target.checked) toast('A .json backup will download after each confirmed draw (allow multiple downloads if your browser asks).', 'info', 7000); };
 window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('error', ev => console.warn('Unhandled error:', ev.message));
 
@@ -1446,6 +1596,7 @@ window.addEventListener('error', ev => console.warn('Unhandled error:', ev.messa
    ===================================================================== */
 const hadData = load();
 refreshAll();
+initOffline();
 if (!hadData) toast('Welcome! Demo prizes & 120 participants are loaded. Import your own in “Data & Tools”.', 'info', 7000);
 if (document.fonts && document.fonts.load) {
   Promise.all(['600 30px Kanit', '700 30px Cinzel'].map(f => document.fonts.load(f, 'Aก'))).catch(() => { }).then(() => document.fonts.ready).then(() => Wheel.draw());

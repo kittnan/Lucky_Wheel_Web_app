@@ -1,0 +1,10 @@
+{
+  "name": "Lucky Wheel – Grand Prize Draw",
+  "short_name": "Lucky Wheel",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#04241a",
+  "theme_color": "#0B5D3B",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
