@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Lucky Wheel – Grand Prize Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Playfair+Display:wght@600;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onerror="window.__xlsxFallback=true;var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';document.head.appendChild(s);"></script>
+<style>
+/* =====================================================================
+   THEME TOKENS
+   ===================================================================== */
+:root{
+  --felt:#0B5D3B; --felt-d:#06361f; --gold:#D4AF37; --gold-hi:#fbe8a0; --gold-lo:#8a6a12;
+  --wine:#8B0000; --ink:#0A0A0A; --cream:#f6f0dc; --txt:#f3ead0; --muted:#b9ad86;
+  --gold-grad:linear-gradient(145deg,#fff1b8 0%,#e8c657 22%,#D4AF37 46%,#8f6b10 72%,#e9c964 100%);
+  --wheel:clamp(290px,min(calc(50vw - 70px),calc(100vh - 190px)),1100px);
+  --cell:clamp(54px,5vw,118px);
+  --head:'Cinzel','Playfair Display','Kanit',serif;
+  --body:'Kanit','Prompt',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:var(--body); color:var(--txt); font-weight:400;
+  background:
+    radial-gradient(ellipse at 50% 30%,rgba(255,240,180,.20),transparent 55%),
+    radial-gradient(ellipse at center,#0f7a4d 0%,#0B5D3B 45%,#04241a 100%);
+  background-attachment:fixed;
+  overflow-x:hidden;
+}
+/* felt weave texture + noise (static, cheap) */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;mix-blend-mode:overlay;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 45%,rgba(0,0,0,.72) 100%)}
+#frame{position:fixed;inset:0;z-index:50;pointer-events:none;border:14px solid;
+  border-image:linear-gradient(135deg,#7a3516,#3a1407 38%,#6b2d12 60%,#2a0e04) 1;
+  box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 4px #3a1407,inset 0 0 40px rgba(0,0,0,.6)}
+.spot{position:fixed;left:50%;top:-10%;width:90vw;height:90vh;margin-left:-45vw;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 30% 55% at 50% 0%,rgba(255,246,200,.16),rgba(255,246,200,.04) 60%,transparent 78%);
+  animation:spot 7s ease-in-out infinite}
+@keyframes spot{0%,100%{opacity:.6;transform:translateX(-1.5%)}50%{opacity:1;transform:translateX(1.5%)}}
+#motes{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.mote{position:absolute;width:4px;height:4px;border-radius:50%;background:radial-gradient(circle,#fff6c8,rgba(212,175,55,0) 70%);opacity:0;animation:mote linear infinite}
+@keyframes mote{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:.7}85%{opacity:.5}100%{transform:translateY(-60vh) scale(1.3);opacity:0}}
+#dim{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.15) 10%,rgba(0,0,0,.9) 75%)}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:1100;pointer-events:none}
+
+/* =====================================================================
+   LAYOUT
+   ===================================================================== */
+#app{position:relative;z-index:4;width:100%;max-width:none;margin:0 auto;padding:30px clamp(18px,2.2vw,44px) 60px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.logo{display:flex;flex-direction:column;line-height:1}
+.logo h1{margin:0;font-family:var(--head);font-weight:900;letter-spacing:.14em;font-size:clamp(26px,4.4vw,48px);
+  background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 #3a2a00) drop-shadow(0 0 14px rgba(212,175,55,.35))}
+.logo small{font-family:var(--head);letter-spacing:.5em;font-size:clamp(9px,1.2vw,12px);color:var(--gold);margin-top:6px;text-transform:uppercase}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font-family:var(--body);font-weight:500;font-size:14px;cursor:pointer;border-radius:10px;padding:9px 16px;border:1px solid rgba(212,175,55,.55);
+  color:var(--gold-hi);background:linear-gradient(180deg,rgba(40,40,40,.85),rgba(0,0,0,.9));transition:transform .12s,box-shadow .2s,opacity .2s;
+  display:inline-flex;gap:6px;align-items:center;justify-content:center;white-space:nowrap}
+.btn:hover{box-shadow:0 0 14px rgba(212,175,55,.5);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.gold{color:#2a1c00;border-color:#6b4f08;background:var(--gold-grad);font-weight:600;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),inset 0 -3px 6px rgba(90,60,0,.5),0 3px 8px rgba(0,0,0,.5);text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.btn.red{background:linear-gradient(180deg,#b01616,#5e0505);border-color:#d4af37;color:#fff}
+.btn.sm{padding:5px 10px;font-size:12.5px;border-radius:8px}
+.btn.ico{padding:9px 12px}
+.card{background:linear-gradient(180deg,rgba(10,10,10,.84),rgba(8,26,17,.9));border:1px solid rgba(212,175,55,.55);border-radius:14px;
+  box-shadow:0 0 0 1px #000,0 12px 40px rgba(0,0,0,.55),inset 0 0 30px rgba(0,0,0,.5)}
+#stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{padding:12px 16px;text-align:center}
+.stat b{display:block;font-family:var(--head);font-size:clamp(22px,3vw,34px);font-weight:700;color:var(--gold-hi);text-shadow:0 0 12px rgba(212,175,55,.5)}
+.stat span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+#stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(18px,2.4vw,44px);align-items:start;width:100%}
+.stage-l{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.stage-r{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (max-width:1060px){:root{--wheel:clamp(280px,min(calc(100vw - 60px),84vh),820px);--cell:clamp(50px,9vw,90px)}#stage{grid-template-columns:minmax(0,1fr)}.stage-r{width:100%}#stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:600px){#app{padding:22px 14px 50px}:root{--wheel:clamp(270px,calc(100vw - 44px),520px);--cell:50px}}
+
+/* =====================================================================
+   WHEEL
+   ===================================================================== */
+#wheelZoom{transition:transform .8s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.wheelBox{position:relative;width:var(--wheel);height:var(--wheel);filter:drop-shadow(0 22px 28px rgba(0,0,0,.65))}
+.wheelBox>*{position:absolute}
+.rim{inset:0;border-radius:50%;background:
+  conic-gradient(from 20deg,#fff0b0,#c9a02c 12%,#7c5a0c 24%,#f0d56e 36%,#a67c15 50%,#fff0b0 62%,#8a6a12 76%,#e9c964 88%,#fff0b0);
+  box-shadow:inset 0 0 0 3px rgba(0,0,0,.35),inset 0 6px 14px rgba(255,255,255,.5),inset 0 -8px 16px rgba(60,40,0,.7)}
+.band{inset:3.2%;border-radius:50%;background:radial-gradient(circle,#1b0303 60%,#4a0707 85%,#2a0404);box-shadow:inset 0 0 22px #000,0 0 0 2px #5b4208}
+#bulbs{inset:0}
+.bulb{position:absolute;left:50%;top:50%;width:3.1%;height:3.1%;margin:-1.55% 0 0 -1.55%;border-radius:50%;background:#5c3f0b;
+  transform:rotate(var(--a)) translateY(calc(var(--wheel) * -.432));box-shadow:inset 0 0 3px #000}
+.bulb::before,.bulb::after{content:"";position:absolute;border-radius:50%;opacity:0;transition:opacity .09s}
+.bulb::before{inset:0;background:radial-gradient(circle at 40% 35%,#fff,#ffe58a 55%,#e0a812)}
+.bulb::after{inset:-90%;background:radial-gradient(circle,rgba(255,226,120,.85),rgba(255,200,60,0) 65%)}
+.bulb.on::before,.bulb.on::after{opacity:1}
+.discRing{inset:9%;border-radius:50%;background:var(--gold-grad);box-shadow:0 0 0 2px #000,inset 0 0 8px rgba(0,0,0,.6)}
+.wheelRot{inset:10.2%;border-radius:50%;overflow:hidden;background:#111;will-change:transform;box-shadow:0 0 0 2px #000}
+.wheelRot canvas{position:absolute;inset:0;width:100%;height:100%}
+#wheelHl{opacity:0;transition:opacity .4s}
+#wheelHl.on{opacity:1;animation:hlpulse .9s ease-in-out infinite alternate}
+@keyframes hlpulse{from{opacity:.55}to{opacity:1}}
+.gloss{inset:10.2%;border-radius:50%;pointer-events:none;will-change:transform;
+  background:conic-gradient(from 0deg,transparent 0 6%,rgba(255,255,255,.20) 10%,transparent 16% 52%,rgba(255,255,255,.13) 58%,transparent 64%)}
+.gloss2{inset:10.2%;border-radius:50%;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 35% 22%,rgba(255,255,255,.18),transparent 70%)}
+.hub{left:50%;top:50%;width:17%;height:17%;margin:-8.5% 0 0 -8.5%;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#fffbe0,#f3d36b 28%,#b88a1c 62%,#5a3f06);
+  box-shadow:0 6px 14px rgba(0,0,0,.7),inset 0 -6px 10px rgba(70,45,0,.7),0 0 0 4px #7c5a0c,0 0 0 6px #f0d56e;display:grid;place-items:center}
+.hub span{font-family:var(--head);font-weight:900;font-size:calc(var(--wheel)*.05);color:#5a1010;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.pointer{left:50%;top:-1.8%;width:9%;height:13.5%;margin-left:-4.5%;transform-origin:50% 29%;will-change:transform;z-index:5;filter:drop-shadow(0 6px 5px rgba(0,0,0,.6))}
+.pointer svg{width:100%;height:100%;display:block}
+.wheelBox.shake{animation:shake .7s ease-in-out}
+@keyframes shake{0%,100%{transform:translate(0,0) rotate(0)}15%{transform:translate(-4px,2px) rotate(-.6deg)}30%{transform:translate(4px,-2px) rotate(.6deg)}45%{transform:translate(-3px,-1px) rotate(-.4deg)}60%{transform:translate(3px,2px) rotate(.4deg)}80%{transform:translate(-1px,1px)}}
+#wheelCap{font-family:var(--head);letter-spacing:.12em;color:var(--gold-hi);text-align:center;min-height:28px;font-size:clamp(14px,1.8vw,19px);padding:0 10px;max-width:var(--wheel);overflow-wrap:anywhere}
+#ticker{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:var(--wheel)}
+#ticker span{font-size:12.5px;padding:3px 10px;border-radius:99px;background:rgba(0,0,0,.55);border:1px solid rgba(212,175,55,.4);color:var(--gold-hi)}
+
+/* =====================================================================
+   SLOT MACHINE
+   ===================================================================== */
+.cab{position:relative;width:100%;border-radius:26px;padding:16px 18px 18px;
+  background:linear-gradient(165deg,#b3121f 0%,#760812 38%,#3a0309 100%);
+  border:5px solid transparent;background-clip:padding-box;
+  box-shadow:0 0 0 5px #d4af37,0 0 0 7px #4a3405,0 20px 40px rgba(0,0,0,.65),inset 0 0 40px rgba(0,0,0,.55),inset 0 4px 0 rgba(255,255,255,.25)}
+.cab-sign{margin:0 auto 12px;width:max-content;max-width:100%;padding:6px 22px;border-radius:10px;font-family:var(--head);font-weight:900;letter-spacing:.3em;font-size:clamp(14px,2vw,20px);
+  color:#3a2600;background:var(--gold-grad);text-shadow:0 1px 0 rgba(255,255,255,.5);box-shadow:inset 0 2px 3px rgba(255,255,255,.6),inset 0 -3px 5px rgba(80,50,0,.6),0 3px 6px rgba(0,0,0,.5)}
+.cab-bulbs{height:10px;margin:0 8px 10px;background:radial-gradient(circle,#ffe58a 0 3px,transparent 4px) 0 0/18px 10px repeat-x;animation:cabb 1s steps(2) infinite}
+@keyframes cabb{50%{opacity:.35}}
+.cab-body{display:flex;gap:10px;align-items:stretch}
+.reels{flex:1;min-width:0;display:grid;grid-template-columns:1.25fr 2.5fr 1.35fr;gap:6px;padding:10px 8px 8px;border-radius:14px;background:#050505;
+  box-shadow:inset 0 0 0 3px #b8921f,inset 0 0 18px #000,0 0 0 2px #2a1d02}
+.reel-col{min-width:0}
+.reel-col.c0 .cell{font-size:calc(var(--cell)*.3)}.reel-col.c2 .cell{font-size:calc(var(--cell)*.32)}
+.reel-label{font-family:var(--head);font-size:11px;letter-spacing:.2em;color:var(--gold);text-align:center;margin-bottom:4px}
+.reel{position:relative;height:calc(var(--cell)*3);overflow:hidden;border-radius:8px;background:linear-gradient(90deg,#d9d1b6,#fbf6e4 20%,#fbf6e4 80%,#d9d1b6);box-shadow:inset 0 0 8px rgba(0,0,0,.55)}
+.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
+.cell{height:var(--cell);display:flex;align-items:center;justify-content:center;padding:0 6px;text-align:center;white-space:nowrap;overflow:hidden;
+  font-weight:600;font-size:calc(var(--cell)*.4);color:#1a1205;text-shadow:0 calc(var(--mb,0)*-1px) 0 rgba(26,18,5,.30),0 calc(var(--mb,0)*1px) 0 rgba(26,18,5,.30),0 calc(var(--mb,0)*-2px) 0 rgba(26,18,5,.14),0 calc(var(--mb,0)*2px) 0 rgba(26,18,5,.14)}
+.reel::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 70%,rgba(0,0,0,.55))}
+.reel::after{content:"";position:absolute;left:0;right:0;top:calc(var(--cell)*1);height:var(--cell);z-index:2;pointer-events:none;border-top:2px solid rgba(139,0,0,.75);border-bottom:2px solid rgba(139,0,0,.75);background:rgba(212,175,55,.12)}
+.streak{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;background:repeating-linear-gradient(180deg,rgba(255,255,255,.55) 0 3px,rgba(0,0,0,.18) 3px 8px)}
+.reel.locked{animation:lock .35s ease-out}
+@keyframes lock{0%{box-shadow:inset 0 0 8px rgba(0,0,0,.55),0 0 0 0 rgba(255,215,90,.9)}100%{box-shadow:inset 0 0 8px rgba(0,0,0,.55),0 0 0 14px rgba(255,215,90,0)}}
+.lever-col{width:54px;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:30px}
+.lever-slot{position:absolute;left:50%;top:14%;bottom:30px;width:10px;margin-left:-5px;border-radius:6px;background:#000;box-shadow:inset 0 0 4px #000,0 0 0 2px #b8921f}
+.lever-base{position:relative;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff2b5,#c9a02c 55%,#6b4f08);box-shadow:0 3px 6px rgba(0,0,0,.6);z-index:2}
+.lever{position:absolute;left:50%;bottom:50%;width:12px;height:clamp(90px,15vw,130px);margin-left:-6px;transform-origin:50% 100%;cursor:pointer;z-index:3;
+  transition:transform .55s cubic-bezier(.3,1.6,.5,1);background:linear-gradient(90deg,#777,#fff 40%,#999 70%,#555);border-radius:6px;box-shadow:0 0 4px rgba(0,0,0,.6)}
+.lever::before{content:"";position:absolute;left:50%;top:-18px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:radial-gradient(circle at 34% 28%,#ff8d8d,#d41515 45%,#590000);box-shadow:0 4px 8px rgba(0,0,0,.6)}
+.lever.pulled{transform:scaleY(-.55);transition:transform .25s cubic-bezier(.5,0,.8,1)}
+.lever:focus-visible{outline:2px solid var(--gold-hi)}
+
+/* controls */
+.ctrl{padding:16px 18px;display:grid;gap:12px}
+.ctrl label.t{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:5px;font-family:var(--head)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{font-family:var(--body);font-size:13px;cursor:pointer;padding:8px 6px;border-radius:9px;border:1px solid rgba(212,175,55,.4);background:rgba(0,0,0,.6);color:var(--txt);line-height:1.25}
+.seg button[aria-pressed=true]{background:var(--gold-grad);color:#2a1c00;font-weight:600;box-shadow:inset 0 -3px 6px rgba(90,60,0,.5)}
+input,select,textarea{font-family:var(--body);font-size:14px;color:var(--txt);background:rgba(0,0,0,.65);border:1px solid rgba(212,175,55,.45);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid var(--gold);outline-offset:0}
+select option{background:#111;color:#fff}
+input[type=color]{padding:2px;height:38px;cursor:pointer}
+input[type=checkbox]{width:auto;accent-color:var(--gold)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer}
+.spinrow{display:flex;align-items:center;gap:18px;justify-content:center;flex-wrap:wrap}
+.chipbtn{position:relative;width:132px;height:132px;border-radius:50%;border:0;cursor:pointer;padding:0;color:#fff;
+  background:radial-gradient(circle,#a80d0d 0 55%,transparent 56%),repeating-conic-gradient(#f6f2e4 0 20deg,#a80d0d 20deg 45deg);
+  box-shadow:0 8px 16px rgba(0,0,0,.65),inset 0 0 0 3px rgba(0,0,0,.4);transition:transform .12s,box-shadow .2s;font-family:var(--head)}
+.chipbtn::before{content:"";position:absolute;inset:14px;border-radius:50%;border:2px dashed var(--gold);box-shadow:0 0 12px rgba(0,0,0,.5) inset}
+.chipbtn span{position:relative;font-weight:900;font-size:26px;letter-spacing:.12em;color:var(--gold-hi);text-shadow:0 2px 0 #3a0000,0 0 12px rgba(255,215,90,.6)}
+.chipbtn:hover{transform:scale(1.05) rotate(-4deg);box-shadow:0 8px 22px rgba(0,0,0,.7),0 0 26px rgba(212,175,55,.6)}
+.chipbtn:active{transform:scale(.97)}
+.hint{font-size:12px;color:var(--muted);text-align:center}
+.busy .lock{opacity:.5;pointer-events:none;filter:saturate(.5)}
+
+/* =====================================================================
+   TABS / TABLES
+   ===================================================================== */
+#tabsSection{margin-top:30px}
+.tabbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:-1px;position:relative;z-index:1}
+.tabbar button{font-family:var(--head);letter-spacing:.1em;font-size:13px;font-weight:700;cursor:pointer;padding:10px 20px;border-radius:12px 12px 0 0;border:1px solid rgba(212,175,55,.45);border-bottom:0;background:rgba(0,0,0,.7);color:var(--muted)}
+.tabbar button[aria-selected=true]{background:linear-gradient(180deg,#1a1405,#0c1d14);color:var(--gold-hi);box-shadow:0 -2px 12px rgba(212,175,55,.25)}
+.panel{display:none;padding:18px;border-top-left-radius:0}
+.panel.active{display:block}
+.panel h3{font-family:var(--head);margin:0 0 10px;color:var(--gold-hi);letter-spacing:.1em;font-size:16px}
+.tbl-wrap{max-height:430px;overflow:auto;border:1px solid rgba(212,175,55,.3);border-radius:10px;background:rgba(0,0,0,.4);-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{position:sticky;top:0;z-index:1;background:#14110a;color:var(--gold);font-weight:500;font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-align:left;padding:9px 10px;border-bottom:1px solid rgba(212,175,55,.5)}
+td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.06);vertical-align:middle}
+tbody tr{content-visibility:auto;contain-intrinsic-size:auto 38px}
+tbody tr:hover{background:rgba(212,175,55,.08)}
+tr.dim td{color:#777}
+tr.dim .sw{filter:grayscale(1)}
+.sw{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid var(--gold);vertical-align:middle}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--gold);color:var(--gold-hi)}
+.badge.won{background:#5e0505;border-color:#d4af37}
+.badge.out{border-color:#666;color:#999}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.banner{padding:10px 14px;border-radius:10px;margin-bottom:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
+.banner.warn{background:rgba(139,90,0,.4);border:1px solid #d4af37}
+.banner.err{background:rgba(139,0,0,.5);border:1px solid #ff6b6b}
+.banner.ok{background:rgba(11,93,59,.5);border:1px solid #3fc489}
+.filters{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;margin-bottom:10px}
+.addrow{display:grid;grid-template-columns:1fr 2fr 1.4fr auto;gap:8px;margin-bottom:10px}
+@media (max-width:700px){.filters{grid-template-columns:1fr}.addrow{grid-template-columns:1fr 1fr}}
+.toolgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.toolgrid .card{padding:14px;display:grid;gap:8px;align-content:start;background:rgba(0,0,0,.45)}
+.toolgrid p{margin:0;font-size:13px;color:var(--muted)}
+
+/* =====================================================================
+   OVERLAYS: modal, winner card, jackpot, toasts
+   ===================================================================== */
+.ov{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:16px;animation:fadein .25s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.dlg{width:min(920px,100%);max-height:92vh;overflow:auto;padding:22px 24px;animation:pop .3s cubic-bezier(.2,1.3,.4,1)}
+.dlg.narrow{width:min(520px,100%)}
+@keyframes pop{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+.dlg h2{margin:0 0 12px;font-family:var(--head);letter-spacing:.1em;color:var(--gold-hi);font-size:20px}
+.dlg .acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.form-grid{display:grid;gap:12px}
+.form-grid label{font-size:12px;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.err-txt{color:#ff8f8f;font-size:13px;min-height:18px}
+.invite{width:min(640px,100%);text-align:center;padding:30px 28px 24px;border-radius:18px;background:radial-gradient(ellipse at 50% 0%,#241a05,#050505 70%);
+  border:3px solid transparent;border-image:var(--gold-grad) 1;box-shadow:0 0 0 2px #000,0 0 60px rgba(212,175,55,.45),inset 0 0 50px rgba(0,0,0,.8);animation:pop .45s cubic-bezier(.2,1.4,.4,1);position:relative}
+.invite::before{content:"";position:absolute;inset:8px;border:1px solid rgba(212,175,55,.55);pointer-events:none}
+.invite.wide{width:min(860px,100%)}
+.inv-top{font-family:var(--head);font-weight:900;letter-spacing:.2em;font-size:clamp(24px,4.4vw,38px);background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.inv-sub{color:var(--muted);margin:6px 0 14px;letter-spacing:.06em}
+.inv-name{font-family:var(--body);font-weight:700;font-size:clamp(30px,6.5vw,60px);line-height:1.15;color:#fff;overflow-wrap:anywhere;
+  text-shadow:0 0 12px rgba(255,215,90,.9),0 0 34px rgba(212,175,55,.7);animation:nameIn .9s cubic-bezier(.2,1.5,.4,1) both,glow 1.8s ease-in-out .9s infinite alternate}
+@keyframes nameIn{0%{transform:scale(.15);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1)}}
+@keyframes glow{from{text-shadow:0 0 10px rgba(255,215,90,.7),0 0 24px rgba(212,175,55,.5)}to{text-shadow:0 0 18px rgba(255,235,150,1),0 0 48px rgba(212,175,55,.9)}}
+.inv-meta{color:var(--muted);margin-top:6px;font-size:15px}
+.inv-won{margin:16px 0 4px;color:var(--muted);letter-spacing:.08em}
+.inv-prize{font-weight:600;font-size:clamp(22px,4vw,34px);color:var(--gold-hi);overflow-wrap:anywhere;text-shadow:0 0 14px rgba(212,175,55,.6)}
+.inv-rate{display:inline-block;margin-top:10px;padding:3px 14px;border-radius:99px;border:1px solid var(--gold);font-size:13px;color:var(--gold)}
+.invite .acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.invite.jp{box-shadow:0 0 0 2px #000,0 0 90px rgba(255,200,40,.85),inset 0 0 50px rgba(0,0,0,.8)}
+#jackpot{position:fixed;inset:0;z-index:1050;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;background:radial-gradient(circle,rgba(0,0,0,.35),rgba(0,0,0,.75))}
+#jackpot.show{display:flex}
+#jackpot h1{margin:0;font-family:var(--head);font-weight:900;letter-spacing:.08em;font-size:clamp(54px,15vw,200px);line-height:1;
+  background:linear-gradient(180deg,#fffbe0 0%,#ffd84a 38%,#c98f0a 52%,#fff0a0 70%,#b07a05);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 #5a3a00) drop-shadow(0 0 30px rgba(255,200,40,.9));animation:jp 1.1s cubic-bezier(.2,1.6,.4,1) both,jpb .5s ease-in-out 1.1s infinite alternate}
+#jackpot p{margin:14px 0 0;font-family:var(--head);font-size:clamp(18px,3.5vw,38px);color:#fff;letter-spacing:.2em;text-shadow:0 0 16px #ffc83a;text-align:center;padding:0 20px;overflow-wrap:anywhere}
+@keyframes jp{0%{transform:scale(.1) rotate(-12deg);opacity:0}70%{transform:scale(1.15) rotate(2deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes jpb{from{transform:scale(1)}to{transform:scale(1.05)}}
+.jpframe{position:absolute;inset:10px;border:10px dotted #ffd54a;border-radius:6px;animation:jpf .24s steps(1) infinite}
+.jpframe.b{inset:26px;border-color:#ff4d4d;animation-delay:.12s}
+@keyframes jpf{0%{opacity:1}50%{opacity:.12}}
+#toasts{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;gap:8px;align-items:center;width:min(560px,92vw);pointer-events:none}
+.toast{pointer-events:auto;padding:10px 18px;border-radius:10px;background:#0b0b0b;border:1px solid var(--gold);color:var(--txt);box-shadow:0 8px 24px rgba(0,0,0,.7);animation:pop .25s;font-size:14.5px;text-align:center}
+.toast.error{border-color:#ff6b6b;background:#2a0707}
+.toast.warn{border-color:#ffb84a;background:#2a1c05}
+.toast.success{border-color:#3fc489;background:#062a1a}
+body.present #tabsSection,body.present #stats,body.present .logo small,body.present .hide-present{display:none}
+body.present{--wheel:clamp(300px,min(86vh,52vw),900px);--cell:min(10vh,86px)}
+body.present #app{padding-top:16px}
+.hidden{display:none!important}
+.imp-sum{display:flex;gap:16px;flex-wrap:wrap;margin:8px 0;font-size:14px}
+.imp-sum b{color:var(--gold-hi)}
+ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-height:150px;overflow:auto}
+@media (prefers-reduced-motion:reduce){.spot,.mote{animation:none}}
+</style>
+</head>
+<body>
+<div class="vignette"></div><div class="spot"></div><div id="motes"></div><div id="frame"></div><div id="dim"></div>
+<canvas id="fx"></canvas>
+
+<div id="app">
+  <header class="top">
+    <div class="logo"><h1>LUCKY WHEEL</h1><small>Grand Prize Draw</small></div>
+    <div class="tools">
+      <button class="btn ico" id="btnSound" data-allow title="Toggle sound">🔊 Sound</button>
+      <button class="btn ico" id="btnFull" data-allow title="Presentation mode">⛶ Full Screen</button>
+    </div>
+  </header>
+
+  <section id="stats">
+    <div class="card stat"><b id="stTotal">0</b><span>Total Participants</span></div>
+    <div class="card stat"><b id="stWin">0</b><span>Winners</span></div>
+    <div class="card stat"><b id="stRem">0</b><span>Remaining</span></div>
+    <div class="card stat"><b id="stPrize">0</b><span>Prizes Left</span></div>
+  </section>
+
+  <section id="stage">
+    <div class="stage-l">
+      <div id="wheelZoom">
+        <div class="wheelBox" id="wheelBox">
+          <div class="rim"></div><div class="band"></div><div id="bulbs"></div><div class="discRing"></div>
+          <div class="wheelRot" id="wheelRot"><canvas id="wheelCv" width="1100" height="1100"></canvas><canvas id="wheelHl" width="1100" height="1100"></canvas></div>
+          <div class="gloss" id="gloss"></div><div class="gloss2"></div>
+          <div class="hub"><span>★</span></div>
+          <div class="pointer" id="pointer">
+            <svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><defs>
+              <linearGradient id="gp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".45" stop-color="#D4AF37"/><stop offset="1" stop-color="#7a5808"/></linearGradient>
+              <radialGradient id="gr" cx=".35" cy=".3"><stop offset="0" stop-color="#ff9a9a"/><stop offset=".55" stop-color="#b00000"/><stop offset="1" stop-color="#4a0000"/></radialGradient></defs>
+              <path d="M30 88 L5 32 A26 26 0 1 1 55 32 Z" fill="url(#gp)" stroke="#4d3606" stroke-width="2"/>
+              <circle cx="30" cy="26" r="10" fill="url(#gr)" stroke="#4d3606" stroke-width="1.5"/></svg>
+          </div>
+        </div>
+      </div>
+      <div id="wheelCap">Ready to spin</div>
+      <div id="ticker"></div>
+    </div>
+
+    <div class="stage-r">
+      <div class="cab" id="cab">
+        <div class="cab-sign">LUCKY DRAW</div>
+        <div class="cab-bulbs"></div>
+        <div class="cab-body">
+          <div class="reels" id="reels"></div>
+          <div class="lever-col"><div class="lever-slot"></div><div class="lever-base"></div>
+            <div class="lever" id="lever" role="button" tabindex="0" aria-label="Pull lever to draw" title="Pull the lever!"></div></div>
+        </div>
+      </div>
+
+      <div class="card ctrl">
+        <div><label class="t">Draw Mode</label>
+          <div class="seg lock" id="modeSeg">
+            <button data-mode="person-first" aria-pressed="true">🎰 Winner<br>then Prize</button>
+            <button data-mode="prize-first" aria-pressed="false">🎡 Prize<br>then Winner</button>
+            <button data-mode="group" aria-pressed="false">👥 Group<br>Draw</button>
+          </div></div>
+        <div class="row lock" style="flex-wrap:nowrap">
+          <div style="flex:1;min-width:0"><label class="t" for="prizeChoice">Prize</label><select id="prizeChoice"></select></div>
+          <div id="groupWrap" class="hidden" style="width:96px"><label class="t" for="groupSize">Winners</label><input id="groupSize" type="number" min="2" max="100" value="10"></div>
+        </div>
+        <label class="chk lock"><input type="checkbox" id="chkExclude"> Exclude previous winners from next draws</label>
+        <div class="spinrow">
+          <button class="chipbtn" id="btnSpin" aria-label="Spin"><span>SPIN</span></button>
+          <div class="hint">Press SPIN or pull the lever<br>Every spin is independent — rates are real.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tabsSection">
+    <div class="tabbar" role="tablist">
+      <button role="tab" data-tab="prizes" aria-selected="true">PRIZES</button>
+      <button role="tab" data-tab="people" aria-selected="false">PARTICIPANTS</button>
+      <button role="tab" data-tab="winners" aria-selected="false">WINNERS</button>
+      <button role="tab" data-tab="tools" aria-selected="false">DATA &amp; TOOLS</button>
+    </div>
+    <div class="card panel active lock" id="p-prizes">
+      <h3>Prize List</h3>
+      <div id="rateBanner"></div>
+      <div class="row" style="margin-bottom:10px">
+        <button class="btn gold" id="btnAddPrize">＋ Add Prize</button>
+        <button class="btn" id="btnImpPrize">⬆ Import Prizes (Excel)</button>
+        <button class="btn" id="btnSim">🧪 Rate Test (Simulation)</button>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th></th><th>Prize</th><th class="num">Left / Total</th><th class="num">Set Rate</th><th class="num">Live Rate</th><th></th></tr></thead><tbody id="prizeBody"></tbody></table></div>
+      <p class="hint" style="text-align:left;margin-top:8px">Live Rate = the real chance per spin right now. When a prize runs out it is removed and the remaining rates are rescaled proportionally.</p>
+    </div>
+    <div class="card panel lock" id="p-people">
+      <h3>Participants</h3>
+      <div class="addrow"><input id="npId" placeholder="Employee ID" maxlength="40"><input id="npName" placeholder="Full name (Thai / English)" maxlength="120"><input id="npDept" placeholder="Department" maxlength="80"><button class="btn gold" id="btnAddPerson">＋ Add</button></div>
+      <div class="filters"><input id="pSearch" type="search" placeholder="🔍 Search name, ID or department"><select id="pDept"><option value="">All departments</option></select><span class="hint" id="pCount" style="align-self:center"></span></div>
+      <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Full Name</th><th>Department</th><th>Status</th><th></th></tr></thead><tbody id="peopleBody"></tbody></table></div>
+    </div>
+    <div class="card panel lock" id="p-winners">
+      <h3>Winners History</h3>
+      <div class="row" style="margin-bottom:10px"><button class="btn gold" id="btnExport">⬇ Export Results (Excel)</button></div>
+      <div class="tbl-wrap"><table><thead><tr><th>No.</th><th>Date/Time</th><th>ID</th><th>Winner</th><th>Department</th><th>Prize</th><th class="num">Rate %</th><th></th></tr></thead><tbody id="histBody"></tbody></table></div>
+    </div>
+    <div class="card panel lock" id="p-tools">
+      <h3>Data &amp; Tools</h3>
+      <div class="toolgrid">
+        <div class="card"><b>Import prizes</b><p>Excel columns: Prize Name | Quantity | Rate (%)</p>
+          <button class="btn" id="btnImpPrize2">⬆ Import Prizes</button><button class="btn" id="btnTplPrize">⬇ Download Template</button></div>
+        <div class="card"><b>Import participants</b><p>Excel columns: Employee ID | Full Name | Department</p>
+          <button class="btn" id="btnImpPeople">⬆ Import Participants</button><button class="btn" id="btnTplPeople">⬇ Download Template</button></div>
+        <div class="card"><b>Settings</b>
+          <label class="chk"><input type="checkbox" id="chkQuick"> Quick spin (short animations)</label>
+          <label class="chk"><input type="checkbox" id="chkSound2"> Sound effects</label></div>
+        <div class="card"><b>Reset</b><p>Clear results only, or erase everything.</p>
+          <button class="btn" id="btnResetResults">↺ Reset Draw Results</button>
+          <button class="btn red" id="btnResetAll">🗑 Erase All Data</button></div>
+      </div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" class="hidden">
+    </div>
+  </section>
+</div>
+
+<div id="jackpot"><div class="jpframe"></div><div class="jpframe b"></div><h1>JACKPOT!</h1><p id="jpPrize"></p></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   1. RANDOM ENGINE  (pure — also loaded by test-random.js in Node)
+   ===================================================================== */
+/* ==== ENGINE:START ==== */
+const RATE_SCALE = 10000;               // integer weight units per 1 %  (0.0001 % resolution)
+const Engine = (() => {
+  const POOL = 16384;
+  const pool = new Uint32Array(POOL);
+  let idx = POOL;
+  function u32() {                       // buffered CSPRNG words – never Math.random()
+    if (idx >= POOL) { crypto.getRandomValues(pool); idx = 0; }
+    return pool[idx++];
+  }
+  function randInt(n) {                  // unbiased integer in [0, n) via rejection sampling
+    if (!Number.isInteger(n) || n <= 0 || n > 4294967296) throw new RangeError('randInt: invalid range ' + n);
+    if (n === 1) return 0;
+    const limit = 4294967296 - (4294967296 % n);
+    let x;
+    do { x = u32(); } while (x >= limit);
+    return x % n;
+  }
+  function weightOf(p) {
+    const r = Number(p.rate);
+    return (isFinite(r) && r > 0) ? Math.round(r * RATE_SCALE) : 0;
+  }
+  function isAvailable(p, ignoreQty) { return weightOf(p) > 0 && (ignoreQty || p.qty > 0); }
+  // Real chance (%) of each prize for the NEXT spin – depleted prizes drop out, the rest rescale.
+  function liveRates(prizes, ignoreQty) {
+    let total = 0;
+    for (const p of prizes) if (isAvailable(p, ignoreQty)) total += weightOf(p);
+    return prizes.map(p => (total > 0 && isAvailable(p, ignoreQty)) ? weightOf(p) / total * 100 : 0);
+  }
+  // Weighted pick using cumulative weights. Returns index into `prizes`, or -1 if nothing drawable.
+  function pickPrize(prizes, ignoreQty) {
+    let total = 0;
+    for (const p of prizes) if (isAvailable(p, ignoreQty)) total += weightOf(p);
+    if (total <= 0) return -1;
+    const r = randInt(total);
+    let acc = 0;
+    for (let i = 0; i < prizes.length; i++) {
+      if (!isAvailable(prizes[i], ignoreQty)) continue;
+      acc += weightOf(prizes[i]);
+      if (r < acc) return i;
+    }
+    return -1; // unreachable
+  }
+  // k distinct items (partial Fisher-Yates)
+  function pickMany(list, k) {
+    const a = list.slice();
+    k = Math.max(0, Math.min(k, a.length));
+    for (let i = 0; i < k; i++) {
+      const j = i + randInt(a.length - i);
+      const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a.slice(0, k);
+  }
+  // Scale rates proportionally so they sum to exactly 100 (largest-remainder rounding at 0.0001 %)
+  function autoBalance(rates) {
+    const sum = rates.reduce((s, r) => s + (r > 0 ? r : 0), 0);
+    if (!(sum > 0)) return null;
+    const target = 100 * RATE_SCALE;
+    const raw = rates.map(r => (r > 0 ? r : 0) / sum * target);
+    const out = raw.map(Math.floor);
+    let left = target - out.reduce((a, b) => a + b, 0);
+    const order = raw.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0]);
+    for (let k = 0; left > 0 && k < order.length; k++, left--) out[order[k][1]]++;
+    return out.map(u => u / RATE_SCALE);
+  }
+  return { randInt, weightOf, liveRates, pickPrize, pickMany, autoBalance, isAvailable };
+})();
+/* ==== ENGINE:END ==== */
+
+/* =====================================================================
+   2. UTILITIES
+   ===================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const mod = (a, n) => ((a % n) + n) % n;
+const fmtRate = x => String(+Number(x).toFixed(4));
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+const todayStr = () => fmtDate(Date.now()).slice(0, 10);
+const rand01 = () => Engine.randInt(1000000) / 1000000;      // visual jitter only – never affects results
+let QUICK = false;
+const T = ms => QUICK ? ms * 0.35 : ms;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function toast(msg, type = 'info', ms) {
+  const box = $('#toasts');
+  while (box.children.length >= 4) box.firstChild.remove();
+  const el = document.createElement('div');
+  el.className = 'toast ' + type; el.textContent = msg; box.appendChild(el);
+  setTimeout(() => el.remove(), ms || (type === 'error' || type === 'warn' ? 6500 : 3800));
+}
+
+// Modal helper: returns {el, close}. buttons: [{label, cls, action}] — action returning false keeps it open.
+function openModal({ title, html, buttons = [], narrow = false, dismiss = true, onOpen }) {
+  const ov = document.createElement('div'); ov.className = 'ov';
+  ov.innerHTML = `<div class="card dlg${narrow ? ' narrow' : ''}" role="dialog" aria-modal="true"><h2>${esc(title)}</h2><div class="dbody">${html}</div><div class="acts"></div></div>`;
+  const acts = $('.acts', ov);
+  const api = { el: ov, close() { document.removeEventListener('keydown', onKey); ov.remove(); } };
+  function onKey(e) { if (e.key === 'Escape' && dismiss) api.close(); }
+  buttons.forEach(b => {
+    const btn = document.createElement('button'); btn.className = 'btn ' + (b.cls || ''); btn.textContent = b.label;
+    btn.onclick = async () => { const r = b.action ? await b.action(api) : undefined; if (r !== false) api.close(); };
+    acts.appendChild(btn);
+  });
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(ov);
+  if (onOpen) onOpen(api);
+  return api;
+}
+const ask = (title, msg, ok = 'Confirm') => new Promise(res => {
+  openModal({ title, html: `<p style="margin:0;line-height:1.5">${esc(msg)}</p>`, narrow: true,
+    buttons: [{ label: 'Cancel', action: () => res(false) }, { label: ok, cls: 'gold', action: () => res(true) }] });
+});
+
+/* =====================================================================
+   3. STATE + PERSISTENCE
+   ===================================================================== */
+const LS_KEY = 'luckyWheel.casino.v1';
+const PALETTE = ['#8B0000', '#141414', '#0B5D3B', '#a31515', '#222222', '#0e7a4d'];
+const S = {
+  prizes: [], participants: [], history: [], nextPid: 1, skip: new Set(),
+  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, groupSize: 10, prizeChoice: 'random' }
+};
+let storageWarned = false;
+function save() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ v: 1, prizes: S.prizes, participants: S.participants, history: S.history, nextPid: S.nextPid, settings: S.settings }));
+  } catch (e) { if (!storageWarned) { storageWarned = true; toast('Could not save to browser storage — data will be lost on refresh.', 'warn'); } }
+}
+function sanitizeLoaded(d) {
+  const out = { prizes: [], participants: [], history: [] };
+  if (!d || typeof d !== 'object') return null;
+  const ids = new Set();
+  (Array.isArray(d.prizes) ? d.prizes : []).forEach(p => {
+    if (!p || typeof p.name !== 'string' || !p.name.trim()) return;
+    const qty = Number.isInteger(p.qty) && p.qty >= 0 ? p.qty : 0;
+    const rate = Number(p.rate); if (!isFinite(rate) || rate < 0 || rate > 100) return;
+    let id = Number(p.id); if (!Number.isInteger(id) || ids.has(id)) id = 0;
+    out.prizes.push({ id, name: p.name.trim(), qty, total: Math.max(qty, Number.isInteger(p.total) ? p.total : qty), rate, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#8B0000' });
+    ids.add(id);
+  });
+  let mx = out.prizes.reduce((m, p) => Math.max(m, p.id), 0);
+  out.prizes.forEach(p => { if (!p.id) p.id = ++mx; });
+  const seen = new Set();
+  (Array.isArray(d.participants) ? d.participants : []).forEach(p => {
+    if (!p || p.id == null || !String(p.name ?? '').trim()) return;
+    const id = String(p.id).trim(); if (!id || seen.has(id)) return; seen.add(id);
+    out.participants.push({ id, name: String(p.name).trim(), dept: String(p.dept ?? '').trim() });
+  });
+  (Array.isArray(d.history) ? d.history : []).forEach(h => {
+    if (!h || typeof h.prize !== 'string') return;
+    out.history.push({ ts: Number(h.ts) || Date.now(), empId: String(h.empId ?? ''), name: String(h.name ?? ''), dept: String(h.dept ?? ''), prize: h.prize, prizeId: Number(h.prizeId) || 0, rate: Number(h.rate) || 0 });
+  });
+  out.nextPid = Math.max(mx + 1, Number(d.nextPid) || 1);
+  out.settings = Object.assign({}, S.settings, d.settings && typeof d.settings === 'object' ? d.settings : {});
+  return out;
+}
+// Deterministic demo data
+function demoPrizes() {
+  const mk = (name, qty, rate, color) => ({ id: 0, name, qty, total: qty, rate, color });
+  return [
+    mk('Toyota Yaris (รถยนต์ใหม่)', 1, 0.01, '#8B0000'), mk('iPhone 17 Pro', 3, 0.5, '#141414'), mk('Gold Bar 1 Baht (ทองคำแท่ง)', 5, 1.5, '#0B5D3B'),
+    mk('Cash 5,000 THB (เงินสด)', 10, 3, '#a31515'), mk('Smart TV 55" (สมาร์ททีวี)', 10, 5, '#222222'), mk('Gift Voucher 1,000 THB', 40, 10, '#0e7a4d'),
+    mk('Lucky Mug (แก้วน้ำ)', 100, 30, '#8B0000'), mk('Thank-You Gift (ของที่ระลึก)', 200, 49.99, '#141414')
+  ];
+}
+function demoPeople(n) {
+  let seed = 12345; const r = m => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed % m; };
+  const th1 = ['สมชาย', 'สมหญิง', 'วิชัย', 'นภา', 'ประเสริฐ', 'กัญญา', 'ธนากร', 'ศิริพร', 'อนุชา', 'พิมพ์ชนก', 'ณัฐวุฒิ', 'สุภาพร', 'ชัยวัฒน์', 'รัตนา', 'ปรีชา', 'มาลี'];
+  const th2 = ['ใจดี', 'รักษาสัตย์', 'ศรีสุข', 'มั่นคง', 'พงษ์เจริญ', 'แสงทอง', 'วัฒนากุล', 'บุญมี', 'สุขสวัสดิ์', 'เจริญผล'];
+  const en1 = ['John', 'Emily', 'Michael', 'Sarah', 'David', 'Jessica', 'Kenji', 'Yuki', 'Wei', 'Priya', 'Hans', 'Marie'];
+  const en2 = ['Smith', 'Johnson', 'Brown', 'Taylor', 'Tanaka', 'Chen', 'Patel', 'Müller', 'Garcia', 'Kim'];
+  const depts = ['Sales', 'Marketing', 'Finance', 'Human Resources', 'IT', 'Operations', 'Logistics', 'Customer Service', 'R&D', 'บัญชี (Accounting)'];
+  const out = [];
+  for (let i = 1; i <= n; i++) {
+    const thai = r(10) < 6;
+    out.push({ id: 'EMP' + String(i).padStart(4, '0'), name: thai ? th1[r(th1.length)] + ' ' + th2[r(th2.length)] : en1[r(en1.length)] + ' ' + en2[r(en2.length)], dept: depts[r(depts.length)] });
+  }
+  return out;
+}
+function loadDemo() {
+  S.prizes = demoPrizes(); S.prizes.forEach((p, i) => p.id = i + 1); S.nextPid = S.prizes.length + 1;
+  S.participants = demoPeople(120); S.history = []; S.skip.clear(); S.settings.prizeChoice = 'random';
+}
+function load() {
+  let d = null;
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) d = sanitizeLoaded(JSON.parse(raw)); } catch (e) { d = null; }
+  if (d) { Object.assign(S, { prizes: d.prizes, participants: d.participants, history: d.history, nextPid: d.nextPid, settings: d.settings }); return true; }
+  loadDemo(); return false;
+}
+const winnerIds = () => new Set(S.history.map(h => h.empId));
+function eligible(extraSkip) {
+  const w = S.settings.exclude ? winnerIds() : null;
+  return S.participants.filter(p => !(w && w.has(p.id)) && !(extraSkip && extraSkip.has(p.id)));
+}
+const sumRates = () => S.prizes.reduce((s, p) => s + p.rate, 0);
+
+/* =====================================================================
+   4. AUDIO  (Web Audio API — no files)
+   ===================================================================== */
+const Sfx = (() => {
+  let ctx = null, master = null, lastTick = 0;
+  function ensure() {
+    if (!S.settings.sound) return null;
+    try {
+      if (!ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; ctx = new AC(); master = ctx.createGain(); master.gain.value = .55; master.connect(ctx.destination); }
+      if (ctx.state === 'suspended') ctx.resume();
+    } catch (e) { return null; }
+    return ctx;
+  }
+  function tone(freq, t0, dur, type, vol, freqEnd) {
+    const c = ensure(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, c.currentTime + t0);
+    if (freqEnd) o.frequency.exponentialRampToValueAtTime(freqEnd, c.currentTime + t0 + dur);
+    g.gain.setValueAtTime(0.0001, c.currentTime + t0);
+    g.gain.exponentialRampToValueAtTime(vol, c.currentTime + t0 + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t0 + dur);
+    o.connect(g); g.connect(master); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + .02);
+  }
+  return {
+    unlock() { ensure(); },
+    tick(speed) {                               // ball/pointer hitting a pin; pitch + volume follow speed
+      const now = performance.now(); if (now - lastTick < 28) return; lastTick = now;
+      const s = Math.min(1, speed / 1400);
+      tone(1500 + s * 900, 0, .035, 'triangle', .12 + .16 * s, 700);
+      tone(260, 0, .02, 'square', .05 + .05 * s);
+    },
+    reelTick() { tone(900, 0, .02, 'square', .035); },
+    thunk() { tone(190, 0, .12, 'sine', .35, 55); tone(1200, 0, .03, 'square', .08); },
+    lever() { tone(140, 0, .25, 'sawtooth', .12, 60); tone(520, .02, .1, 'square', .05, 200); },
+    coin(n = 14) { for (let i = 0; i < n; i++) { const f = 1900 + rand01() * 1400, t = i * .07 + rand01() * .03; tone(f, t, .38, 'sine', .09); tone(f * 1.5, t, .22, 'sine', .04); } },
+    fanfare() { [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => { tone(f, i * .13, .32, 'triangle', .2); tone(f / 2, i * .13, .32, 'sawtooth', .05); }); },
+    bell() { for (let k = 0; k < 9; k++) [1046.5, 1318.5, 1568, 2093].forEach((f, j) => tone(f, k * .17 + j * .01, 1.1, 'sine', .11 / (1 + j * .4))); },
+    pop() { tone(700, 0, .08, 'sine', .15, 1400); }
+  };
+})();
+
+/* =====================================================================
+   5. PARTICLE EFFECTS (canvas)
+   ===================================================================== */
+const FX = (() => {
+  const cv = $('#fx'), cx = cv.getContext('2d');
+  let W = 0, H = 0, dpr = 1, parts = [], running = false, last = 0, rainUntil = 0, rainRate = 0, rainAcc = 0;
+  const MAX = 520;
+  function resize() { dpr = Math.min(window.devicePixelRatio || 1, 1.5); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  addEventListener('resize', resize); resize();
+  const CHIPS = ['#b30f0f', '#111', '#0B5D3B', '#2a4fb5', '#f4f1e6'];
+  function add(p) { if (parts.length < MAX) parts.push(p); }
+  function coin(x, y, vx, vy, big) { add({ k: 'coin', x, y, vx, vy, g: 1100, rot: rand01() * 6.28, vr: (rand01() - .5) * 8, ph: rand01() * 6.28, vph: 6 + rand01() * 8, s: (big ? 13 : 9) + rand01() * 6, life: 0, max: 3.2 + rand01() * 1.5 }); }
+  function chip(x, y, vx, vy) { add({ k: 'chip', c: CHIPS[Engine.randInt(CHIPS.length)], x, y, vx, vy, g: 1000, rot: rand01() * 6.28, vr: (rand01() - .5) * 6, ph: rand01() * 6.28, vph: 5 + rand01() * 6, s: 11 + rand01() * 6, life: 0, max: 3.4 + rand01() * 1.4 }); }
+  function spark(x, y, vx, vy) { add({ k: 'spark', x, y, vx, vy, g: 120, rot: rand01() * 6.28, vr: 2, ph: 0, vph: 0, s: 5 + rand01() * 9, life: 0, max: .7 + rand01() * .9 }); }
+  function start() { if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); } }
+  function drawParticle(p) {
+    const a = Math.max(0, 1 - Math.max(0, p.life - p.max * .7) / (p.max * .3));
+    cx.globalAlpha = a;
+    if (p.k === 'spark') {
+      cx.globalCompositeOperation = 'lighter'; cx.fillStyle = '#ffe9a0';
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot); const s = p.s * (1 - p.life / p.max * .6);
+      cx.beginPath(); cx.moveTo(0, -s); cx.quadraticCurveTo(0, 0, s, 0); cx.quadraticCurveTo(0, 0, 0, s); cx.quadraticCurveTo(0, 0, -s, 0); cx.quadraticCurveTo(0, 0, 0, -s); cx.fill(); cx.restore();
+      cx.globalCompositeOperation = 'source-over';
+    } else {
+      const sq = Math.abs(Math.cos(p.ph));
+      cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot);
+      cx.beginPath(); cx.ellipse(0, 0, Math.max(1.5, p.s * sq), p.s, 0, 0, 6.2832);
+      if (p.k === 'coin') {
+        cx.fillStyle = sq > .5 ? '#f3cf5a' : '#c79a21'; cx.fill(); cx.lineWidth = 2; cx.strokeStyle = '#7a5808'; cx.stroke();
+        cx.beginPath(); cx.ellipse(0, 0, Math.max(1, p.s * sq * .6), p.s * .6, 0, 0, 6.2832); cx.strokeStyle = 'rgba(122,88,8,.7)'; cx.lineWidth = 1.2; cx.stroke();
+      } else {
+        cx.fillStyle = p.c; cx.fill(); cx.lineWidth = 3; cx.strokeStyle = '#fff'; cx.setLineDash([5, 5]); cx.stroke(); cx.setLineDash([]);
+      }
+      cx.restore();
+    }
+    cx.globalAlpha = 1;
+  }
+  function frame(ts) {
+    const dt = Math.min(.04, (ts - last) / 1000); last = ts;
+    cx.clearRect(0, 0, W, H);
+    if (ts < rainUntil) {
+      rainAcc += rainRate * dt;
+      while (rainAcc >= 1) { rainAcc--; const x = rand01() * W; (rand01() < .35 ? chip : coin)(x, -20, (rand01() - .5) * 120, 80 + rand01() * 160); }
+    }
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i]; p.life += dt;
+      if (p.life >= p.max || p.y > H + 40) { parts.splice(i, 1); continue; }
+      p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.ph += p.vph * dt;
+      if (p.k !== 'spark') { p.vx *= (1 - .15 * dt); }
+      drawParticle(p);
+    }
+    if (parts.length || ts < rainUntil) requestAnimationFrame(frame); else { running = false; cx.clearRect(0, 0, W, H); }
+  }
+  return {
+    burst(x, y, n = 70) {
+      for (let i = 0; i < n; i++) { const a = rand01() * 6.28, v = 260 + rand01() * 520, f = rand01(); (f < .5 ? coin : f < .7 ? chip : spark)(x, y, Math.cos(a) * v, Math.sin(a) * v - 260); }
+      for (let i = 0; i < 40; i++) { const a = rand01() * 6.28, v = 80 + rand01() * 380; spark(x, y, Math.cos(a) * v, Math.sin(a) * v); }
+      start();
+    },
+    rain(ms, rate = 60) { rainUntil = performance.now() + ms; rainRate = rate; start(); },
+    sparkles(x, y, n = 30) { for (let i = 0; i < n; i++) { const a = rand01() * 6.28, v = 40 + rand01() * 260; spark(x, y, Math.cos(a) * v, Math.sin(a) * v - 60); } start(); },
+    fountain(ms) {
+      const t0 = performance.now(); const id = setInterval(() => {
+        if (performance.now() - t0 > ms) return clearInterval(id);
+        for (const fx of [.15, .5, .85]) for (let i = 0; i < 4; i++) (rand01() < .3 ? chip : coin)(W * fx + (rand01() - .5) * 40, H + 10, (rand01() - .5) * 420 + (fx < .5 ? 160 : fx > .5 ? -160 : 0), -(900 + rand01() * 700), true);
+        start();
+      }, 70); start();
+    },
+    clear() { parts.length = 0; rainUntil = 0; }
+  };
+})();
+
+/* =====================================================================
+   6. MARQUEE BULBS + POINTER + AMBIENT
+   ===================================================================== */
+const Bulbs = (() => {
+  const N = 32; let els = [], mode = 'idle', step = 0, lastT = 0;
+  const holder = $('#bulbs');
+  for (let i = 0; i < N; i++) { const b = document.createElement('i'); b.className = 'bulb'; b.style.setProperty('--a', (i * 360 / N) + 'deg'); holder.appendChild(b); els.push(b); }
+  const period = { idle: 240, spin: 65, suspense: 45, win: 170, jackpot: 90 };
+  function update(ts) {
+    if (ts - lastT < period[mode]) return; lastT = ts; step++;
+    for (let i = 0; i < N; i++) {
+      let on;
+      if (mode === 'idle') on = (i + step) % 4 === 0;
+      else if (mode === 'spin') on = (i + step) % 3 === 0;
+      else if (mode === 'suspense') on = (i + step) % 2 === 0;
+      else on = step % 2 === 0;
+      els[i].classList.toggle('on', on);
+    }
+  }
+  return { set(m) { mode = m; lastT = 0; }, update };
+})();
+const Pointer = (() => {
+  const el = $('#pointer'); let a = 0, shown = 0;
+  return {
+    kick(speed) { a = -Math.min(34, 10 + speed / 60); },
+    update(dt) {
+      if (a === 0 && shown === 0) return;
+      a *= Math.exp(-dt * 17); if (Math.abs(a) < .05) a = 0;
+      if (a !== shown) { shown = a; el.style.transform = `rotate(${a.toFixed(2)}deg)`; }
+    }
+  };
+})();
+(function globalLoop() {
+  let last = performance.now();
+  function f(ts) { const dt = Math.min(.05, (ts - last) / 1000); last = ts; Bulbs.update(ts); Pointer.update(dt); requestAnimationFrame(f); }
+  requestAnimationFrame(f);
+  const m = $('#motes');
+  for (let i = 0; i < 16; i++) { const d = document.createElement('i'); d.className = 'mote'; d.style.left = (rand01() * 100) + '%'; d.style.top = (40 + rand01() * 60) + '%'; d.style.animationDuration = (9 + rand01() * 10) + 's'; d.style.animationDelay = (-rand01() * 12) + 's'; m.appendChild(d); }
+})();
+
+/* =====================================================================
+   7. WHEEL RENDERER + SPIN
+   ===================================================================== */
+const Wheel = (() => {
+  const cv = $('#wheelCv'), hl = $('#wheelHl'), rot = $('#wheelRot'), gloss = $('#gloss'), zoom = $('#wheelZoom'), box = $('#wheelBox'), dim = $('#dim');
+  const c = cv.getContext('2d'), hc = hl.getContext('2d');
+  const W = 1100, CX = 550, R = 534, HUB = 128;
+  let slices = [], seg = 30, theta = 0, lastSlice = -1;
+  function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const r = Math.round((n >> 16) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f); return `rgb(${r},${g},${b})`; }
+  function lum(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
+  function build() {
+    const N = S.prizes.length;
+    slices = [];
+    if (N === 0) { for (let i = 0; i < 12; i++) slices.push({ pi: -1 }); }
+    else { const k = Math.max(1, Math.ceil(12 / N)); for (let r = 0; r < k; r++) for (let p = 0; p < N; p++) slices.push({ pi: p, rep: r, reps: k }); }
+    seg = 360 / slices.length;
+  }
+  function draw() {
+    build();
+    c.clearRect(0, 0, W, W);
+    const n = slices.length, A = 2 * Math.PI / n;
+    slices.forEach((s, i) => {
+      const a0 = -Math.PI / 2 + i * A, a1 = a0 + A;
+      const p = s.pi >= 0 ? S.prizes[s.pi] : null;
+      let col = p ? p.color : (i % 2 ? '#141414' : '#8B0000');
+      const gone = p && p.qty <= 0;
+      if (gone) col = '#4a4a4a'; else if (p && s.reps > 1 && S.prizes.length === 1 && s.rep % 2) col = shade(col, .6);
+      if (col[0] === '#' && col.length === 7) { /* ok */ }
+      c.beginPath(); c.moveTo(CX, CX); c.arc(CX, CX, R, a0, a1); c.closePath();
+      c.fillStyle = col; c.fill();
+      const g = c.createRadialGradient(CX, CX, HUB, CX, CX, R);
+      g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(.45, 'rgba(0,0,0,.05)'); g.addColorStop(1, 'rgba(255,255,255,.12)');
+      c.fillStyle = g; c.fill();
+      c.lineWidth = 3; c.strokeStyle = '#D4AF37'; c.stroke();
+      if (p) {
+        c.save(); c.translate(CX, CX); c.rotate((a0 + a1) / 2);
+        c.textAlign = 'right'; c.textBaseline = 'middle';
+        const lightBg = !gone && lum(col.length === 7 ? col : '#222222') > .6;
+        c.fillStyle = gone ? '#8a8a8a' : (lightBg ? '#1a1205' : '#fff6d6');
+        const xEnd = R - 56, maxW = xEnd - HUB - 24;
+        let fs = Math.max(13, Math.min(46, Math.sin(Math.min(A, Math.PI) / 2) * 2 * (R * .5) * .46));
+        let label = p.name;
+        c.font = `600 ${fs}px Kanit, sans-serif`;
+        while (c.measureText(label).width > maxW && fs > 15) { fs -= 1; c.font = `600 ${fs}px Kanit, sans-serif`; }
+        if (c.measureText(label).width > maxW) { while (label.length > 2 && c.measureText(label + '…').width > maxW) label = label.slice(0, -1); label += '…'; }
+        c.shadowColor = 'rgba(0,0,0,.65)'; c.shadowBlur = 5; c.shadowOffsetY = 2;
+        c.fillText(label, xEnd, 0);
+        c.restore();
+      }
+    });
+    // gold studs on every boundary + outer ring edge
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * A, x = CX + Math.cos(a) * (R - 20), y = CX + Math.sin(a) * (R - 20);
+      const g = c.createRadialGradient(x - 3, y - 3, 1, x, y, 13);
+      g.addColorStop(0, '#fffbe0'); g.addColorStop(.5, '#D4AF37'); g.addColorStop(1, '#6b4f08');
+      c.beginPath(); c.arc(x, y, 12, 0, 6.2832); c.fillStyle = g; c.fill();
+    }
+    c.beginPath(); c.arc(CX, CX, R - 2, 0, 6.2832); c.lineWidth = 6; c.strokeStyle = '#D4AF37'; c.stroke();
+    if (S.prizes.length === 0) {
+      c.fillStyle = 'rgba(0,0,0,.6)'; c.beginPath(); c.arc(CX, CX, 250, 0, 6.2832); c.fill();
+      c.fillStyle = '#fbe8a0'; c.font = '700 54px Cinzel, serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ADD PRIZES', CX, CX);
+    }
+    clearHighlight();
+  }
+  function highlight(i) {
+    hc.clearRect(0, 0, W, W);
+    const A = 2 * Math.PI / slices.length, a0 = -Math.PI / 2 + i * A, a1 = a0 + A;
+    hc.beginPath(); hc.moveTo(CX, CX); hc.arc(CX, CX, R, a0, a1); hc.closePath();
+    hc.fillStyle = 'rgba(255,244,190,.42)'; hc.fill();
+    hc.shadowColor = '#fff2a8'; hc.shadowBlur = 40; hc.lineWidth = 10; hc.strokeStyle = '#fff3b0'; hc.stroke();
+    hl.classList.add('on');
+  }
+  function clearHighlight() { hl.classList.remove('on'); hc.clearRect(0, 0, W, W); }
+  function setRot(deg) { rot.style.transform = `rotate(${deg}deg)`; gloss.style.transform = `rotate(${(deg * -0.35).toFixed(2)}deg)`; }
+  function underPointer(th) { return Math.floor(mod(-th, 360) / seg) % slices.length; }
+  function domAngle() {            // read the rotation back from the DOM, independently of our own variables
+    const m = getComputedStyle(rot).transform; if (!m || m === 'none') return 0;
+    const v = m.match(/matrix\(([^)]+)\)/)[1].split(',').map(Number); return Math.atan2(v[1], v[0]) * 180 / Math.PI;
+  }
+  function domSliceUnderPointer() { return underPointer(domAngle()); }
+  // Pick which on-wheel slice shows prize pi (all replicas of a prize are equivalent → choose one uniformly)
+  function sliceFor(pi) { const cand = []; slices.forEach((s, i) => { if (s.pi === pi) cand.push(i); }); return cand[Engine.randInt(cand.length)]; }
+  function spinTo(pi, short) {
+    return new Promise(resolve => {
+      clearHighlight();
+      const target = sliceFor(pi); if (target == null) { resolve({ slice: -1 }); return; }
+      const jitter = (rand01() - .5) * .66 * seg;                      // stop somewhere inside the slice (never on a pin)
+      const targetMod = mod(-(target + .5) * seg + jitter, 360);
+      const start = theta;
+      const spins = short ? 3 : 5 + Engine.randInt(4);                  // 5–8 full turns
+      const total = spins * 360 + mod(targetMod - start, 360);
+      const dur = short ? T(3000) : T(8200 + Engine.randInt(1600));
+      // velocity profile: smooth ramp-up (a), then quadratic ease-out (decel)
+      const a = .09, L = 1 - a, norm = a / 2 + L / 3;
+      const pos = t => t < a ? (a * (Math.pow(t / a, 3) - Math.pow(t / a, 4) / 2)) / norm
+                              : (a / 2 + L / 3 * (1 - Math.pow(1 - (t - a) / L, 3))) / norm;
+      Bulbs.set('spin');
+      const t0 = performance.now(); let prev = start, prevT = t0, lastK = Math.floor(start / seg), susp = 0;
+      function frame(now) {
+        const t = Math.min(1, (now - t0) / dur);
+        const th = start + total * pos(t);
+        const k = Math.floor(th / seg), dt = Math.max(1, now - prevT), speed = (th - prev) / dt * 1000;
+        if (k > lastK) { Sfx.tick(speed); Pointer.kick(speed); lastK = k; }
+        prev = th; prevT = now;
+        setRot(th);
+        const s = t > .7 ? Math.min(1, (t - .7) / .3) : 0;               // suspense phase
+        if (s !== susp) {
+          susp = s;
+          zoom.style.transition = 'none'; zoom.style.transform = `scale(${1 + .07 * s})`;
+          dim.style.opacity = (.85 * s).toFixed(3);
+          if (s > 0 && s < .05) Bulbs.set('suspense');
+        }
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          theta = mod(start + total, 360); setRot(theta);
+          let got = underPointer(theta);
+          if (got !== target) { console.error('Wheel alignment mismatch – snapping', got, target); theta = mod(-(target + .5) * seg, 360); setRot(theta); got = target; }
+          lastSlice = target;
+          zoom.style.transition = ''; zoom.style.transform = 'scale(1.03)';
+          resolve({ slice: target });
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+  function endSuspense() { zoom.style.transition = ''; zoom.style.transform = 'scale(1)'; dim.style.opacity = 0; Bulbs.set('idle'); }
+  function shake() { box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake'); setTimeout(() => box.classList.remove('shake'), 800); }
+  return { draw, spinTo, highlight, clearHighlight, endSuspense, shake, domSliceUnderPointer, underPointer, get theta() { return theta; }, get seg() { return seg; }, get sliceCount() { return slices.length; }, sliceInfo: i => slices[i], get lastSlice() { return lastSlice; } };
+})();
+
+/* =====================================================================
+   8. SLOT MACHINE
+   ===================================================================== */
+const Slot = (() => {
+  const defs = [{ label: 'ID', val: p => p.id }, { label: 'NAME', val: p => p.name }, { label: 'DEPARTMENT', val: p => p.dept || '—' }];
+  const host = $('#reels'); const reels = [];
+  defs.forEach(d => {
+    const col = document.createElement('div'); col.className = 'reel-col c' + reels.length;
+    col.innerHTML = `<div class="reel-label">${d.label}</div><div class="reel"><div class="strip"></div><div class="streak"></div></div>`;
+    host.appendChild(col);
+    reels.push({ def: d, win: $('.reel', col), strip: $('.strip', col), streak: $('.streak', col), cur: '?', up: '', dn: '' });
+  });
+  const mkCell = t => { const d = document.createElement('div'); d.className = 'cell'; d.textContent = t; return d; };
+  function fit(cell) {
+    cell.style.fontSize = ''; const w = cell.clientWidth - 12;
+    if (cell.scrollWidth > cell.clientWidth + 1) { const fs = parseFloat(getComputedStyle(cell).fontSize); cell.style.fontSize = Math.max(11, fs * w / cell.scrollWidth * .96) + 'px'; }
+  }
+  function setStatic(r, up, cur, dn) {
+    r.up = up; r.cur = cur; r.dn = dn;
+    r.strip.replaceChildren(mkCell(up), mkCell(cur), mkCell(dn)); r.strip.style.transform = 'translateY(0)'; r.strip.style.setProperty('--mb', 0);
+    for (const c of r.strip.children) fit(c);
+  }
+  reels.forEach(r => setStatic(r, '', '?', ''));
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  // finals: [idText, nameText, deptText]; pool: participants for filler cells
+  function spin(finals, pool) {
+    return new Promise(resolve => {
+      const H = reels[0].strip.children[0].offsetHeight || 64;
+      const dur = [2400, 3300, 4200].map(T);
+      let done = 0;
+      reels.forEach((r, k) => {
+        const N = Math.round((26 + k * 12) * (QUICK ? .6 : 1));
+        const fill = () => pool.length ? r.def.val(pool[Engine.randInt(pool.length)]) : '—';
+        const items = [fill(), r.cur];
+        for (let i = 0; i < N; i++) items.push(fill());
+        const tailUp = fill(), tailDn = fill();
+        items.push(finals[k], tailDn);
+        r.strip.replaceChildren(...items.map(mkCell)); r.strip.style.transform = 'translateY(0)';
+        const dist = (items.length - 3) * H; // centre moves from index 1 to index items.length-2
+        const t0 = performance.now(); let prevY = 0, prevT = t0, lastCell = 0;
+        function frame(now) {
+          const t = Math.min(1, (now - t0) / dur[k]), y = dist * easeOut(t);
+          r.strip.style.transform = `translateY(${-y}px)`;
+          const v = Math.abs(y - prevY) / Math.max(1, now - prevT) * 1000; prevY = y; prevT = now;
+          const blur = Math.min(1, v / (H * 14)); r.strip.style.setProperty('--mb', (blur * 9).toFixed(2)); r.streak.style.opacity = (blur * .55).toFixed(2);
+          const cellIdx = Math.floor(y / H); if (cellIdx > lastCell) { lastCell = cellIdx; if (k === 1) Sfx.reelTick(); }
+          if (t < 1) requestAnimationFrame(frame);
+          else {
+            setStatic(r, tailUp, finals[k], tailDn); r.streak.style.opacity = 0;
+            r.win.classList.remove('locked'); void r.win.offsetWidth; r.win.classList.add('locked'); Sfx.thunk();
+            if (++done === reels.length) resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    });
+  }
+  const lever = $('#lever');
+  function pull() { lever.classList.add('pulled'); Sfx.lever(); setTimeout(() => lever.classList.remove('pulled'), 380); }
+  return { spin, pull, defs };
+})();
+
+/* =====================================================================
+   9. EXCEL IMPORT / EXPORT
+   ===================================================================== */
+function needXlsx() {
+  if (typeof XLSX === 'undefined') { toast('The Excel library could not be loaded (check your internet connection) — import/export is unavailable.', 'error'); return false; }
+  return true;
+}
+function downloadBook(wb, filename) {
+  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function sheetFromRows(rows, widths) { const ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = widths.map(w => ({ wch: w })); return ws; }
+function templatePrizes() {
+  if (!needXlsx()) return;
+  const wb = XLSX.utils.book_new();
+  const rows = [['Prize Name', 'Quantity', 'Rate (%)']].concat(demoPrizes().map(p => [p.name, p.qty, p.rate]));
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(rows, [38, 10, 10]), 'Prizes'); downloadBook(wb, 'Template_Prizes.xlsx');
+}
+function templatePeople() {
+  if (!needXlsx()) return;
+  const wb = XLSX.utils.book_new();
+  const rows = [['Employee ID', 'Full Name', 'Department']].concat(demoPeople(12).map(p => [p.id, p.name, p.dept]));
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(rows, [14, 30, 24]), 'Participants'); downloadBook(wb, 'Template_Participants.xlsx');
+}
+function exportResults() {
+  if (!S.history.length) { toast('No results to export yet — run a draw first.', 'warn'); return; }
+  if (!needXlsx()) return;
+  const rows = [['No.', 'Date/Time', 'Employee ID', 'Winner Name', 'Department', 'Prize', 'Prize Rate (%)']];
+  S.history.forEach((h, i) => rows.push([i + 1, fmtDate(h.ts), String(h.empId), h.name, h.dept, h.prize, +Number(h.rate).toFixed(4)]));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(rows, [6, 20, 14, 30, 24, 36, 14]), 'Results');
+  downloadBook(wb, `Lucky_Draw_Results_${todayStr()}.xlsx`);
+  toast('Results exported.', 'success');
+}
+const norm = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9฀-๿]/g, '');
+async function readRows(file) {
+  if (!needXlsx()) return null;
+  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) { toast('Unsupported file type. Please choose an .xlsx file.', 'error'); return null; }
+  if (file.size > 15 * 1024 * 1024) { toast('This file is too large (max 15 MB).', 'error'); return null; }
+  if (file.size === 0) { toast('This file is empty.', 'error'); return null; }
+  let wb;
+  try { wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array', codepage: 65001 }); }
+  catch (e) { toast('This file could not be read. Make sure it is a valid Excel (.xlsx) file.', 'error'); return null; }
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  if (!ws) { toast('The workbook has no sheets.', 'error'); return null; }
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true, blankrows: false });
+  const hasData = rows.filter(r => r.some(v => String(v).trim() !== ''));
+  if (!hasData.length) { toast('The Excel file is empty — no data found.', 'error'); return null; }
+  return hasData;
+}
+function mapHeader(row, spec) {   // spec: {key:[aliases]} → {key:colIndex}
+  const hdr = row.map(norm), map = {};
+  for (const k in spec) { const i = hdr.findIndex(h => spec[k].includes(h)); if (i >= 0) map[k] = i; }
+  return map;
+}
+const cellStr = v => String(v ?? '').trim();
+function parsePrizeRows(rows) {
+  const spec = { name: ['prizename', 'prize', 'name', 'item', 'reward'], qty: ['quantity', 'qty', 'amount', 'stock', 'count'], rate: ['rate', 'ratepercent', 'droprate', 'percent', 'ratepct'] };
+  const m = mapHeader(rows[0], spec), missing = ['name', 'qty', 'rate'].filter(k => !(k in m));
+  if (missing.length) return { fatal: `Wrong file format. Missing column(s): ${missing.map(k => ({ name: 'Prize Name', qty: 'Quantity', rate: 'Rate (%)' }[k])).join(', ')}.\nExpected headers: Prize Name | Quantity | Rate (%). Download the template to see an example.` };
+  const valid = [], issues = [], names = new Set();
+  rows.slice(1).forEach((r, i) => {
+    const line = i + 2, name = cellStr(r[m.name]);
+    if (r.every(v => cellStr(v) === '')) return;
+    if (!name) return issues.push(`Row ${line}: prize name is empty — skipped.`);
+    const q = Number(String(r[m.qty]).replace(/,/g, '')), qRaw = cellStr(r[m.qty]);
+    if (qRaw === '' || !isFinite(q) || !Number.isInteger(q) || q < 0 || q > 1e6) return issues.push(`Row ${line} (${name}): quantity must be a whole number ≥ 0 — skipped.`);
+    const rawRate = cellStr(r[m.rate]).replace(/%/g, '').replace(/,/g, ''), rate = Number(rawRate);
+    if (rawRate === '' || !isFinite(rate) || rate < 0 || rate > 100) return issues.push(`Row ${line} (${name}): rate must be a number between 0 and 100 — skipped.`);
+    const key = name.toLowerCase();
+    if (names.has(key)) return issues.push(`Row ${line} (${name}): duplicate prize name in file — skipped.`);
+    names.add(key); valid.push({ name: name.slice(0, 80), qty: q, rate: Math.round(rate * RATE_SCALE) / RATE_SCALE });
+  });
+  return { valid, issues };
+}
+function parsePeopleRows(rows) {
+  const spec = { id: ['employeeid', 'id', 'empid', 'employeecode', 'code'], name: ['fullname', 'name', 'employeename'], dept: ['department', 'dept', 'division'] };
+  const m = mapHeader(rows[0], spec), missing = ['id', 'name'].filter(k => !(k in m));
+  if (missing.length) return { fatal: `Wrong file format. Missing column(s): ${missing.map(k => ({ id: 'Employee ID', name: 'Full Name' }[k])).join(', ')}.\nExpected headers: Employee ID | Full Name | Department. Download the template to see an example.` };
+  const valid = [], issues = [], seen = new Set();
+  rows.slice(1).forEach((r, i) => {
+    const line = i + 2;
+    if (r.every(v => cellStr(v) === '')) return;
+    const id = cellStr(r[m.id]), name = cellStr(r[m.name]), dept = 'dept' in m ? cellStr(r[m.dept]) : '';
+    if (!id) return issues.push(`Row ${line}: Employee ID is empty — skipped.`);
+    if (!name) return issues.push(`Row ${line} (${id}): name is empty — skipped.`);
+    if (seen.has(id)) return issues.push(`Row ${line}: duplicate Employee ID "${id}" — skipped.`);
+    seen.add(id); valid.push({ id: id.slice(0, 40), name: name.slice(0, 120), dept: dept.slice(0, 80) });
+  });
+  return { valid, issues };
+}
+async function importFlow(kind) {
+  if (!needXlsx()) return;
+  const inp = $('#fileInput'); inp.value = '';
+  inp.onchange = async () => {
+    const f = inp.files && inp.files[0]; if (!f) return;
+    const rows = await readRows(f); if (!rows) return;
+    const res = kind === 'prizes' ? parsePrizeRows(rows) : parsePeopleRows(rows);
+    if (res.fatal) { openModal({ title: 'Cannot import this file', html: `<p style="white-space:pre-line;line-height:1.5">${esc(res.fatal)}</p>`, narrow: true, buttons: [{ label: 'OK', cls: 'gold' }] }); return; }
+    if (!res.valid.length) { openModal({ title: 'Nothing to import', html: `<p>No valid rows were found in this file.</p>${res.issues.length ? '<ul class="issues">' + res.issues.slice(0, 15).map(i => `<li>${esc(i)}</li>`).join('') + '</ul>' : ''}`, narrow: true, buttons: [{ label: 'OK', cls: 'gold' }] }); return; }
+    showImportPreview(kind, res);
+  };
+  inp.click();
+}
+function showImportPreview(kind, res) {
+  const isP = kind === 'prizes', v = res.valid;
+  const head = isP ? '<tr><th>#</th><th>Prize Name</th><th class="num">Quantity</th><th class="num">Rate (%)</th></tr>' : '<tr><th>#</th><th>Employee ID</th><th>Full Name</th><th>Department</th></tr>';
+  const body = v.slice(0, 50).map((r, i) => isP ? `<tr><td>${i + 1}</td><td>${esc(r.name)}</td><td class="num">${r.qty}</td><td class="num">${fmtRate(r.rate)}</td></tr>` : `<tr><td>${i + 1}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.dept)}</td></tr>`).join('');
+  const sum = isP ? v.reduce((s, r) => s + r.rate, 0) : 0;
+  const html = `<div class="imp-sum"><span>✔ Valid rows: <b>${v.length}</b></span><span>⚠ Skipped: <b>${res.issues.length}</b></span>${isP ? `<span>Total rate: <b>${fmtRate(sum)}%</b></span>` : ''}</div>
+    ${isP && Math.abs(sum - 100) > 1e-6 ? '<div class="banner warn">Total rate is not 100%. You can fix it after import with “Auto-Balance”.</div>' : ''}
+    <div class="row" style="margin-bottom:8px"><label class="chk"><input type="radio" name="impmode" value="replace" checked> Replace existing ${isP ? 'prizes' : 'participants'}</label>
+    <label class="chk"><input type="radio" name="impmode" value="append"> Append to existing</label></div>
+    <div class="tbl-wrap" style="max-height:260px"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    ${v.length > 50 ? `<p class="hint" style="text-align:left">… and ${v.length - 50} more rows</p>` : ''}
+    ${res.issues.length ? '<ul class="issues">' + res.issues.slice(0, 20).map(i => `<li>${esc(i)}</li>`).join('') + (res.issues.length > 20 ? `<li>… and ${res.issues.length - 20} more</li>` : '') + '</ul>' : ''}`;
+  openModal({ title: isP ? 'Import Prizes — Preview' : 'Import Participants — Preview', html, buttons: [
+    { label: 'Cancel' },
+    { label: `Import ${v.length} rows`, cls: 'gold', action: m => {
+      if (busy) return false;
+      const append = $('input[name=impmode]:checked', m.el).value === 'append';
+      let added = 0, dup = 0;
+      if (isP) {
+        if (!append) S.prizes = [];
+        const have = new Set(S.prizes.map(p => p.name.toLowerCase()));
+        v.forEach(r => { if (have.has(r.name.toLowerCase())) { dup++; return; } have.add(r.name.toLowerCase()); S.prizes.push({ id: S.nextPid++, name: r.name, qty: r.qty, total: r.qty, rate: r.rate, color: PALETTE[S.prizes.length % PALETTE.length] }); added++; });
+        S.settings.prizeChoice = 'random';
+      } else {
+        if (!append) S.participants = [];
+        const have = new Set(S.participants.map(p => p.id));
+        v.forEach(r => { if (have.has(r.id)) { dup++; return; } have.add(r.id); S.participants.push(r); added++; });
+      }
+      S.skip.clear(); save(); refreshAll();
+      toast(`Imported ${added} ${isP ? 'prizes' : 'participants'}${dup ? ` (${dup} duplicates skipped)` : ''}.`, 'success');
+    } }] });
+}
+
+/* =====================================================================
+   10. UI RENDERING
+   ===================================================================== */
+let busy = false;
+function setBusy(b) { busy = b; document.body.classList.toggle('busy', b); $('#btnSpin').disabled = b; }
+
+function renderStats() {
+  const elig = eligible();
+  $('#stTotal').textContent = S.participants.length;
+  $('#stWin').textContent = S.history.length;
+  $('#stRem').textContent = S.settings.exclude ? elig.length : S.participants.length;
+  $('#stPrize').textContent = S.prizes.reduce((s, p) => s + p.qty, 0);
+}
+function renderPrizes() {
+  const live = Engine.liveRates(S.prizes);
+  $('#prizeBody').innerHTML = S.prizes.length ? S.prizes.map((p, i) => `<tr class="${p.qty <= 0 ? 'dim' : ''}">
+    <td><span class="sw" style="background:${esc(p.color)}"></span></td><td>${esc(p.name)}${p.qty <= 0 ? ' <span class="badge out">Out of stock</span>' : (p.rate > 0 && p.rate < 1 ? ' <span class="badge">JACKPOT</span>' : '')}${p.rate <= 0 && p.qty > 0 ? ' <span class="badge out">0% rate</span>' : ''}</td>
+    <td class="num">${p.qty} / ${p.total}</td><td class="num">${fmtRate(p.rate)}%</td><td class="num">${p.qty > 0 && live[i] > 0 ? '<b style="color:var(--gold-hi)">' + fmtRate(live[i]) + '%</b>' : '—'}</td>
+    <td style="white-space:nowrap;text-align:right"><button class="btn sm" data-edit="${p.id}">Edit</button> <button class="btn sm red" data-del="${p.id}">✕</button></td></tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No prizes yet. Add one or import an Excel file.</td></tr>';
+  const sum = sumRates(), b = $('#rateBanner');
+  if (!S.prizes.length) b.innerHTML = '';
+  else if (sum <= 0) b.innerHTML = '<div class="banner err"><span>⚠ Total rate is 0% — no prize can be drawn. Set a rate above 0 for at least one prize.</span></div>';
+  else if (Math.abs(sum - 100) > 1e-6) b.innerHTML = `<div class="banner warn"><span>⚠ Total rate is <b>${fmtRate(sum)}%</b> (should be 100%). Draws still work using the proportions, but the rates won't match what you typed.</span><button class="btn gold sm" id="btnBalance">Auto-Balance to 100%</button></div>`;
+  else b.innerHTML = `<div class="banner ok"><span>✔ Total rate = 100%</span></div>`;
+  const sel = $('#prizeChoice'), cur = S.settings.prizeChoice;
+  sel.innerHTML = '<option value="random">🎡 Spin the wheel (random by rate)</option>' + S.prizes.map(p => `<option value="${p.id}" ${p.qty <= 0 ? 'disabled' : ''}>${esc(p.name)} (${p.qty} left)</option>`).join('');
+  if (cur !== 'random' && !S.prizes.some(p => String(p.id) === String(cur) && p.qty > 0)) S.settings.prizeChoice = 'random';
+  sel.value = String(S.settings.prizeChoice);
+}
+function renderDeptFilter() {
+  const sel = $('#pDept'), keep = sel.value;
+  const depts = [...new Set(S.participants.map(p => p.dept).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  sel.innerHTML = '<option value="">All departments</option>' + depts.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  sel.value = depts.includes(keep) ? keep : '';
+}
+function renderPeople() {
+  const q = $('#pSearch').value.trim().toLowerCase(), d = $('#pDept').value, w = winnerIds();
+  const list = S.participants.filter(p => (!d || p.dept === d) && (!q || (p.id + ' ' + p.name + ' ' + p.dept).toLowerCase().includes(q)));
+  $('#pCount').textContent = `${list.length} of ${S.participants.length}`;
+  $('#peopleBody').innerHTML = list.length ? list.map(p => `<tr><td>${esc(p.id)}</td><td>${esc(p.name)}</td><td>${esc(p.dept)}</td>
+    <td>${w.has(p.id) ? '<span class="badge won">Winner</span>' : '<span class="badge">In draw</span>'}</td><td style="text-align:right"><button class="btn sm red" data-delp="${esc(p.id)}">✕</button></td></tr>`).join('')
+    : `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">${S.participants.length ? 'No participants match your search.' : 'No participants yet. Add one or import an Excel file.'}</td></tr>`;
+}
+function renderHistory() {
+  $('#histBody').innerHTML = S.history.length ? S.history.map((h, i) => `<tr><td>${i + 1}</td><td>${fmtDate(h.ts)}</td><td>${esc(h.empId)}</td><td>${esc(h.name)}</td><td>${esc(h.dept)}</td><td>${esc(h.prize)}</td><td class="num">${fmtRate(h.rate)}</td><td><button class="btn sm" data-void="${i}" title="Remove this result and return the prize to stock">Void</button></td></tr>`).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">No winners yet.</td></tr>';
+  $('#ticker').innerHTML = S.history.slice(-4).reverse().map(h => `<span>🏆 ${esc(h.name)} — ${esc(h.prize)}</span>`).join('');
+}
+function renderControls() {
+  $$('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === S.settings.mode)));
+  $('#groupWrap').classList.toggle('hidden', S.settings.mode !== 'group');
+  $('#groupSize').value = S.settings.groupSize;
+  $('#chkExclude').checked = S.settings.exclude;
+  $('#chkQuick').checked = S.settings.quick; $('#chkSound2').checked = S.settings.sound;
+  $('#btnSound').textContent = S.settings.sound ? '🔊 Sound' : '🔇 Muted';
+  QUICK = !!S.settings.quick;
+}
+function refreshAll() { renderPrizes(); renderDeptFilter(); renderPeople(); renderHistory(); renderStats(); renderControls(); Wheel.draw(); }
+
+/* ---- prize add / edit ---- */
+function prizeForm(p) {
+  const isNew = !p;
+  const d = p || { name: '', qty: 1, rate: 1, color: PALETTE[S.prizes.length % PALETTE.length] };
+  openModal({ title: isNew ? 'Add Prize' : 'Edit Prize', narrow: true, html: `<div class="form-grid">
+    <div><label>Prize name</label><input id="fpName" maxlength="80" value="${esc(d.name)}" placeholder="e.g. iPhone 17 Pro / รถยนต์"></div>
+    <div class="row" style="flex-wrap:nowrap"><div style="flex:1"><label>Quantity left</label><input id="fpQty" type="number" min="0" step="1" value="${d.qty}"></div>
+    <div style="flex:1"><label>Rate (%)</label><input id="fpRate" type="number" min="0" max="100" step="0.01" value="${d.rate}"></div></div>
+    <div><label>Wheel colour</label><input id="fpColor" type="color" value="${esc(d.color)}"></div>
+    <div class="err-txt" id="fpErr"></div></div>`,
+    buttons: [{ label: 'Cancel' }, { label: 'Save', cls: 'gold', action: () => {
+      const name = $('#fpName').value.trim(), qty = Number($('#fpQty').value), rate = Number($('#fpRate').value), err = $('#fpErr');
+      if (!name) return err.textContent = 'Please enter a prize name.', false;
+      if ($('#fpQty').value === '' || !Number.isInteger(qty) || qty < 0 || qty > 1e6) return err.textContent = 'Quantity must be a whole number (0 or more).', false;
+      if ($('#fpRate').value === '' || !isFinite(rate) || rate < 0 || rate > 100) return err.textContent = 'Rate must be between 0 and 100.', false;
+      if (S.prizes.some(x => x !== p && x.name.toLowerCase() === name.toLowerCase())) return err.textContent = 'A prize with this name already exists.', false;
+      const r4 = Math.round(rate * RATE_SCALE) / RATE_SCALE, color = $('#fpColor').value;
+      if (isNew) S.prizes.push({ id: S.nextPid++, name, qty, total: qty, rate: r4, color });
+      else Object.assign(p, { name, qty, total: Math.max(p.total, qty), rate: r4, color });
+      save(); refreshAll();
+    } }], onOpen: m => setTimeout(() => $('#fpName', m.el).focus(), 50) });
+}
+
+/* =====================================================================
+   11. RATE SIMULATION
+   ===================================================================== */
+function runSimulation() {
+  const idxs = S.prizes.map((p, i) => Engine.isAvailable(p) ? i : -1).filter(i => i >= 0);
+  if (!S.prizes.length) return toast('Add some prizes first.', 'warn');
+  if (!idxs.length) return toast(S.prizes.some(p => p.qty > 0) ? 'All remaining prizes have a 0% rate — nothing to simulate.' : 'No prizes left in stock — nothing to simulate.', 'warn');
+  const N = 100000, counts = new Array(S.prizes.length).fill(0), t0 = performance.now();
+  for (let i = 0; i < N; i++) counts[Engine.pickPrize(S.prizes)]++;    // same function as the real draw; stock is NOT touched
+  const ms = Math.round(performance.now() - t0), live = Engine.liveRates(S.prizes);
+  let allOk = true;
+  const rows = idxs.map(i => {
+    const p = S.prizes[i], pr = live[i] / 100, exp = pr * N, sd = Math.sqrt(N * pr * (1 - pr)), z = sd > 0 ? (counts[i] - exp) / sd : 0, ok = Math.abs(z) <= 4;
+    if (!ok) allOk = false;
+    return `<tr><td>${esc(p.name)}</td><td class="num">${fmtRate(live[i])}%</td><td class="num">${exp.toFixed(1)}</td><td class="num">${counts[i]}</td><td class="num"><b>${(counts[i] / N * 100).toFixed(3)}%</b></td><td class="num">${((counts[i] / N * 100) - live[i] >= 0 ? '+' : '') + ((counts[i] / N * 100) - live[i]).toFixed(3)}</td><td class="num">${z.toFixed(2)}</td><td>${ok ? '✔' : '✖'}</td></tr>`;
+  }).join('');
+  openModal({ title: 'Rate Test — 100,000 Simulated Spins', html: `
+    <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Uses the exact same random function as real draws (crypto.getRandomValues). Stock and history are <b>not</b> changed. Done in ${ms} ms. “Set rate” is the current live rate (depleted prizes excluded, others rescaled). A prize passes if its result is within ±4σ of the expected count.</p>
+    <div class="banner ${allOk ? 'ok' : 'err'}">${allOk ? '✔ All prizes are within the expected statistical range.' : '✖ Some prize is outside the expected range (rare by chance — run again).'}</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Prize</th><th class="num">Set rate</th><th class="num">Expected</th><th class="num">Observed</th><th class="num">Observed %</th><th class="num">Diff (pp)</th><th class="num">z</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`,
+    buttons: [{ label: 'Close' }, { label: '↻ Run Again', cls: 'gold', action: () => { setTimeout(runSimulation, 0); } }] });
+}
+
+/* =====================================================================
+   12. DRAW FLOW
+   ===================================================================== */
+const caption = t => { $('#wheelCap').textContent = t; };
+const centerOf = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+
+async function wheelPhase(pi, short) {
+  caption('Spinning…');
+  const r = await Wheel.spinTo(pi, short);
+  await prizeReveal(S.prizes[pi], r.slice);
+}
+async function prizeReveal(prize, slice) {
+  Wheel.highlight(slice); Wheel.shake();
+  caption('🎡 ' + prize.name);
+  const jackpot = prize.rate > 0 && prize.rate < 1;
+  const [x, y] = centerOf($('#wheelBox'));
+  if (jackpot) {
+    Bulbs.set('jackpot'); Sfx.bell(); Sfx.coin(18);
+    $('#jpPrize').textContent = prize.name; $('#jackpot').classList.add('show');
+    FX.fountain(T(3300)); FX.burst(x, y, 120);
+    await sleep(T(3600)); $('#jackpot').classList.remove('show');
+  } else {
+    Bulbs.set('win'); Sfx.coin(10); FX.sparkles(x, y, 50);
+    await sleep(T(1100));
+  }
+  Wheel.endSuspense(); Bulbs.set(jackpot ? 'win' : 'idle');
+}
+async function slotPhase(person, pool) {
+  caption('Drawing winner…'); Slot.pull();
+  await sleep(T(300));
+  await Slot.spin([person.id, person.name, person.dept || '—'], pool);
+}
+function celebrateFinal(jackpot) {
+  Sfx.fanfare(); Sfx.coin(16);
+  const [x, y] = centerOf($('#cab'));
+  FX.burst(x, y, jackpot ? 90 : 60); FX.rain(T(jackpot ? 4200 : 2800), jackpot ? 90 : 55);
+}
+function winnerInner(person, prize, effRate, remainingAfter, actions) {
+  return `<div class="inv-top">🎰 WINNER!</div><div class="inv-sub">Congratulations, you won…</div>
+      <div class="inv-name">${esc(person.name)}</div><div class="inv-meta">${esc(person.id)}${person.dept ? ' · ' + esc(person.dept) : ''}</div>
+      <div class="inv-won">— YOU WON —</div><div class="inv-prize">${esc(prize.name)}</div>
+      <span class="inv-rate">Drop rate ${fmtRate(effRate)}% · ${remainingAfter} left after this</span>${actions}`;
+}
+function winnerCard(person, prize, effRate, remainingAfter, canRedraw) {
+  return new Promise(resolve => {
+    const jp = prize.rate > 0 && prize.rate < 1;
+    const ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = `<div class="invite${jp ? ' jp' : ''}" role="dialog" aria-modal="true">${winnerInner(person, prize, effRate, remainingAfter,
+      `<div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winner</button>${canRedraw ? '<button class="btn" data-a="redraw">↻ Redraw (not present)</button>' : ''}<button class="btn sm" data-a="discard">Discard</button></div>`)}</div>`;
+    ov.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (!b) return; $$('button', ov).forEach(x => x.disabled = true); ov.remove(); resolve(b.dataset.a); });
+    document.body.appendChild(ov);
+  });
+}
+function groupCard(persons, prize, effRate, getMore) {
+  return new Promise(resolve => {
+    const ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = `<div class="invite wide" role="dialog" aria-modal="true"><div class="inv-top">🎰 WINNERS!</div>
+      <div class="inv-sub">Congratulations! Each of these players wins:</div><div class="inv-prize" style="margin-bottom:10px">${esc(prize.name)}</div>
+      <div class="tbl-wrap" style="text-align:left;max-height:46vh"><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Department</th><th>Present</th></tr></thead><tbody id="gBody"></tbody></table></div>
+      <div class="inv-rate" style="margin-top:12px">Drop rate ${fmtRate(effRate)}% · uncheck anyone who is absent, then “Redraw Absent”</div>
+      <div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winners</button><button class="btn" data-a="redraw">↻ Redraw Absent</button><button class="btn sm" data-a="discard">Discard</button></div></div>`;
+    const body = $('#gBody', ov);
+    const render = (anim) => {
+      body.innerHTML = persons.map((p, i) => `<tr style="${anim ? `animation:pop .4s ${(i * 0.07).toFixed(2)}s both` : ''}"><td>${i + 1}</td><td>${esc(p.id)}</td><td><b>${esc(p.name)}</b></td><td>${esc(p.dept)}</td><td><input type="checkbox" checked data-i="${i}"></td></tr>`).join('');
+      if (anim) Sfx.coin(8);
+    };
+    render(true);
+    ov.addEventListener('click', async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const present = $$('input[type=checkbox]', ov).map(x => x.checked);
+      if (b.dataset.a === 'redraw') {
+        const absent = present.map((v, i) => v ? -1 : i).filter(i => i >= 0);
+        if (!absent.length) return toast('Uncheck the absent players first.', 'warn');
+        const repl = getMore(persons.filter((_, i) => present[i]), persons.filter((_, i) => !present[i]), absent.length);
+        if (!repl.length) return toast('No other participants are available to replace them.', 'warn');
+        let k = 0; persons = persons.map((p, i) => present[i] ? p : (repl[k++] || null)).filter(Boolean); render(true); return;
+      }
+      if (b.dataset.a === 'confirm') { const keep = persons.filter((_, i) => present[i]); if (!keep.length) return toast('Select at least one present winner, or choose Discard.', 'warn'); ov.remove(); resolve({ a: 'confirm', persons: keep }); return; }
+      ov.remove(); resolve({ a: 'discard' });
+    });
+    document.body.appendChild(ov);
+  });
+}
+function commit(prize, persons, effRate) {
+  const ts = Date.now(); let n = 0;
+  persons.forEach(p => { if (prize.qty <= 0) return; S.history.push({ ts: ts + n, empId: p.id, name: p.name, dept: p.dept || '', prize: prize.name, prizeId: prize.id, rate: effRate }); prize.qty--; n++; });
+  S.skip.clear(); save(); refreshAll();
+  return n;
+}
+
+async function startDraw() {
+  if (busy) return;
+  const st = S.settings, group = st.mode === 'group';
+  // ---- validation (synchronous, before locking) ----
+  if (!S.prizes.length) return toast('There are no prizes yet. Add prizes or import an Excel file first.', 'warn');
+  let pi = -1;
+  if (st.prizeChoice === 'random') {
+    if (group) return toast('Group Draw needs a specific prize — pick one in the “Prize” list.', 'warn');
+    if (!S.prizes.some(p => p.qty > 0)) return toast('All prizes have been given out. Add stock or reset the results.', 'warn');
+    if (!S.prizes.some(p => Engine.isAvailable(p))) return toast('The remaining prizes all have a 0% rate, so none can be drawn. Check the prize rates.', 'warn');
+  } else {
+    pi = S.prizes.findIndex(p => String(p.id) === String(st.prizeChoice));
+    if (pi < 0 || S.prizes[pi].qty <= 0) { st.prizeChoice = 'random'; renderPrizes(); return toast('That prize is no longer available. Please choose another.', 'warn'); }
+  }
+  if (!S.participants.length) return toast('There are no participants yet. Add people or import an Excel file first.', 'warn');
+  const elig0 = eligible();
+  if (!elig0.length) return toast('No participants left to draw — everyone has already won. Turn off “Exclude previous winners” or reset results.', 'warn');
+  let n = 1;
+  if (group) {
+    n = Math.floor(Number($('#groupSize').value));
+    if (!isFinite(n) || n < 1) return toast('Enter how many winners to draw (1 or more).', 'warn');
+    st.groupSize = n;
+  }
+  setBusy(true);
+  Sfx.unlock(); Slot.pull();
+  try {
+    // ---- decide EVERYTHING before any animation ----
+    if (st.prizeChoice === 'random') pi = Engine.pickPrize(S.prizes);
+    if (pi < 0) throw new Error('no drawable prize');
+    const prize = S.prizes[pi];
+    const effRate = Engine.liveRates(S.prizes)[pi];                  // real chance this prize had on this spin
+    const jackpot = prize.rate > 0 && prize.rate < 1;
+    S.skip.clear();
+    if (group) {
+      const cnt = Math.min(n, prize.qty, elig0.length);
+      if (cnt < n) toast(`Only ${cnt} winner(s) can be drawn (limited by prize stock / participants).`, 'info');
+      let persons = Engine.pickMany(elig0, cnt);
+      await wheelPhase(pi, true);
+      caption('Drawing winners…'); await sleep(T(250));
+      await Slot.spin(['★', `${persons.length} WINNERS`, prize.name.slice(0, 30)], elig0);
+      celebrateFinal(jackpot);
+      const getMore = (keep, absent, k) => { absent.forEach(a => S.skip.add(a.id)); const ex = new Set(keep.map(p => p.id)); return Engine.pickMany(eligible(S.skip).filter(p => !ex.has(p.id)), k); };
+      const res = await groupCard(persons, prize, effRate, getMore);
+      if (res.a === 'confirm') { const c = commit(prize, res.persons, effRate); toast(`Saved ${c} winner(s) for “${prize.name}”.`, 'success'); caption('✔ ' + c + ' winners confirmed'); }
+      else caption('Draw discarded');
+    } else {
+      let person = elig0[Engine.randInt(elig0.length)];
+      if (st.mode === 'person-first') { await slotPhase(person, elig0); await sleep(T(300)); await wheelPhase(pi, false); }
+      else { await wheelPhase(pi, false); await sleep(T(200)); await slotPhase(person, elig0); }
+      celebrateFinal(jackpot);
+      for (;;) {
+        const res = await winnerCard(person, prize, effRate, prize.qty - 1, true);
+        if (res === 'confirm') { commit(prize, [person], effRate); toast(`${person.name} won “${prize.name}”.`, 'success'); caption('✔ ' + person.name); break; }
+        if (res === 'discard') { caption('Draw discarded'); break; }
+        // redraw: same prize, new person (absent person excluded for this redraw only)
+        S.skip.add(person.id);
+        const pool = eligible(S.skip);
+        if (!pool.length) { toast('No other participants available — draw discarded.', 'warn'); caption('Draw discarded'); break; }
+        person = pool[Engine.randInt(pool.length)];
+        await slotPhase(person, pool); celebrateFinal(jackpot);
+      }
+    }
+  } catch (e) {
+    console.error(e); toast('Something went wrong during the draw. Nothing was saved — please try again.', 'error');
+  } finally {
+    S.skip.clear(); Wheel.endSuspense(); Wheel.clearHighlight(); $('#jackpot').classList.remove('show'); FX.clear();
+    save(); refreshAll(); setBusy(false);
+  }
+}
+
+/* =====================================================================
+   13. EVENT WIRING
+   ===================================================================== */
+// While a draw is running, swallow clicks on everything inside #app except items flagged data-allow
+$('#app').addEventListener('click', e => {
+  if (busy && !e.target.closest('[data-allow]')) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+$('#app').addEventListener('keydown', e => { if (busy && (e.key === 'Enter' || e.key === ' ') && !e.target.closest('[data-allow]')) e.preventDefault(); }, true);
+
+$('#btnSpin').onclick = startDraw;
+$('#lever').onclick = startDraw;
+$('#lever').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startDraw(); } };
+$('#modeSeg').onclick = e => { const b = e.target.closest('button[data-mode]'); if (!b || busy) return; S.settings.mode = b.dataset.mode; save(); renderControls(); };
+$('#prizeChoice').onchange = e => { if (busy) return; S.settings.prizeChoice = e.target.value; save(); };
+$('#groupSize').onchange = e => { const v = Math.floor(Number(e.target.value)); S.settings.groupSize = isFinite(v) && v >= 1 ? v : 10; e.target.value = S.settings.groupSize; save(); };
+$('#chkExclude').onchange = e => { if (busy) { e.target.checked = S.settings.exclude; return; } S.settings.exclude = e.target.checked; save(); renderPeople(); renderStats(); };
+$('#chkQuick').onchange = e => { S.settings.quick = e.target.checked; QUICK = e.target.checked; save(); };
+function setSound(v) { S.settings.sound = v; save(); renderControls(); if (v) { Sfx.unlock(); Sfx.pop(); } }
+$('#chkSound2').onchange = e => setSound(e.target.checked);
+$('#btnSound').onclick = () => setSound(!S.settings.sound);
+$('#btnFull').onclick = async () => {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+    else document.body.classList.toggle('present');
+  } catch (e) { document.body.classList.toggle('present'); }
+};
+document.addEventListener('fullscreenchange', () => { document.body.classList.toggle('present', !!document.fullscreenElement); $('#btnFull').textContent = document.fullscreenElement ? '✕ Exit Full Screen' : '⛶ Full Screen'; });
+
+$('.tabbar').onclick = e => {
+  const b = e.target.closest('button[data-tab]'); if (!b) return;
+  $$('.tabbar button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+  $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'p-' + b.dataset.tab));
+};
+$('#btnAddPrize').onclick = () => prizeForm(null);
+$('#btnImpPrize').onclick = () => importFlow('prizes');
+$('#btnImpPrize2').onclick = () => importFlow('prizes');
+$('#btnImpPeople').onclick = () => importFlow('people');
+$('#btnTplPrize').onclick = templatePrizes;
+$('#btnTplPeople').onclick = templatePeople;
+$('#btnExport').onclick = exportResults;
+$('#btnSim').onclick = runSimulation;
+$('#p-prizes').addEventListener('click', async e => {
+  const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+  if (e.target.closest('#btnBalance')) {
+    const out = Engine.autoBalance(S.prizes.map(p => p.rate));
+    if (!out) return toast('Cannot auto-balance: all rates are 0.', 'error');
+    S.prizes.forEach((p, i) => p.rate = out[i]); save(); refreshAll(); toast('Rates scaled proportionally to total 100%.', 'success');
+  } else if (ed) { const p = S.prizes.find(x => x.id === Number(ed.dataset.edit)); if (p) prizeForm(p); }
+  else if (del) {
+    const p = S.prizes.find(x => x.id === Number(del.dataset.del)); if (!p) return;
+    if (await ask('Delete prize', `Delete “${p.name}”? Past winners keep their record.`, 'Delete')) { S.prizes = S.prizes.filter(x => x !== p); save(); refreshAll(); }
+  }
+});
+let tmr; $('#pSearch').oninput = () => { clearTimeout(tmr); tmr = setTimeout(renderPeople, 120); };
+$('#pDept').onchange = renderPeople;
+$('#btnAddPerson').onclick = () => {
+  const id = $('#npId').value.trim(), name = $('#npName').value.trim(), dept = $('#npDept').value.trim();
+  if (!id || !name) return toast('Employee ID and Full Name are required.', 'warn');
+  if (S.participants.some(p => p.id === id)) return toast(`Employee ID “${id}” already exists.`, 'error');
+  S.participants.push({ id, name, dept }); $('#npId').value = $('#npName').value = $('#npDept').value = '';
+  save(); refreshAll(); toast('Participant added.', 'success');
+};
+$('#p-people').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.addrow')) $('#btnAddPerson').click(); });
+$('#p-people').addEventListener('click', async e => {
+  const b = e.target.closest('[data-delp]'); if (!b) return;
+  const p = S.participants.find(x => x.id === b.dataset.delp); if (!p) return;
+  if (await ask('Remove participant', `Remove ${p.name} (${p.id}) from the list?`, 'Remove')) { S.participants = S.participants.filter(x => x !== p); save(); refreshAll(); }
+});
+$('#p-winners').addEventListener('click', async e => {
+  const b = e.target.closest('[data-void]'); if (!b) return;
+  const i = Number(b.dataset.void), h = S.history[i]; if (!h) return;
+  if (await ask('Void result', `Remove ${h.name} → ${h.prize} from the results? The prize returns to stock and the person can be drawn again.`, 'Void')) {
+    S.history.splice(i, 1); const p = S.prizes.find(x => x.id === h.prizeId && x.name === h.prize); if (p && p.qty < p.total) p.qty++;
+    save(); refreshAll();
+  }
+});
+$('#btnResetResults').onclick = async () => {
+  if (!(await ask('Reset draw results', 'Clear all winners and restore every prize to its full quantity? Prizes and participants are kept.', 'Reset'))) return;
+  S.history = []; S.prizes.forEach(p => p.qty = p.total); S.skip.clear(); save(); refreshAll(); toast('Draw results cleared.', 'success');
+};
+$('#btnResetAll').onclick = async () => {
+  if (!(await ask('Erase all data', 'This permanently erases all prizes, participants and results, and restores the demo data. Continue?', 'Erase Everything'))) return;
+  try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+  const keep = { sound: S.settings.sound }; loadDemo(); Object.assign(S.settings, keep); save(); refreshAll(); toast('All data reset to the demo set.', 'success');
+};
+document.addEventListener('pointerdown', () => Sfx.unlock(), { once: true });
+window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('error', ev => console.warn('Unhandled error:', ev.message));
+
+/* =====================================================================
+   14. INIT
+   ===================================================================== */
+const hadData = load();
+refreshAll();
+if (!hadData) toast('Welcome! Demo prizes & 120 participants are loaded. Import your own in “Data & Tools”.', 'info', 7000);
+if (document.fonts && document.fonts.load) {
+  Promise.all(['600 30px Kanit', '700 30px Cinzel'].map(f => document.fonts.load(f, 'Aก'))).catch(() => { }).then(() => document.fonts.ready).then(() => Wheel.draw());
+}
+window.LW = { S, Engine, Wheel, Slot, startDraw, parsePrizeRows, parsePeopleRows, eligible, save, refreshAll, get busy() { return busy; } };
+</script>
+</body>
+</html>

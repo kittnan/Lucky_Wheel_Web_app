@@ -1,0 +1,71 @@
+
+== Demo rates  (1,000,000 draws) ==
+Prize                   Set%   Expected   Observed      Obs%       z
+Grand 0.01%           0.0100        100        108    0.0108    0.80
+PASS Grand 0.01%: |z| = 0.80 < 4
+Big 0.5%              0.5000       5000       4965    0.4965   -0.50
+PASS Big 0.5%: |z| = 0.50 < 4
+Gold 1.5%             1.5000      15000      15215    1.5215    1.77
+PASS Gold 1.5%: |z| = 1.77 < 4
+Cash 3%               3.0000      30000      29890    2.9890   -0.64
+PASS Cash 3%: |z| = 0.64 < 4
+TV 5%                 5.0000      50000      49981    4.9981   -0.09
+PASS TV 5%: |z| = 0.09 < 4
+Voucher 10%          10.0000     100000     100092   10.0092    0.31
+PASS Voucher 10%: |z| = 0.31 < 4
+Mug 30%              30.0000     300000     299635   29.9635   -0.80
+PASS Mug 30%: |z| = 0.80 < 4
+Gift 49.99%          49.9900     499900     500114   50.0114    0.43
+PASS Gift 49.99%: |z| = 0.43 < 4
+PASS rescaled live rate of Gift = 51.5414%
+PASS live rates still sum to 100
+
+== After depletion  (1,000,000 draws) ==
+Prize                   Set%   Expected   Observed      Obs%       z
+PASS Grand 0.01% (unavailable) never drawn
+Big 0.5%              0.5155       5155       5107    0.5107   -0.67
+PASS Big 0.5%: |z| = 0.67 < 4
+Gold 1.5%             1.5466      15466      15420    1.5420   -0.37
+PASS Gold 1.5%: |z| = 0.37 < 4
+PASS Cash 3% (unavailable) never drawn
+TV 5%                 5.1552      51552      51741    5.1741    0.86
+PASS TV 5%: |z| = 0.86 < 4
+Voucher 10%          10.3103     103103     103215   10.3215    0.37
+PASS Voucher 10%: |z| = 0.37 < 4
+Mug 30%              30.9310     309310     310003   31.0003    1.50
+PASS Mug 30%: |z| = 1.50 < 4
+Gift 49.99%          51.5414     515414     514514   51.4514   -1.80
+PASS Gift 49.99%: |z| = 1.80 < 4
+
+== Fine decimals 0.07 / 0.03 / 99.9  (1,000,000 draws) ==
+Prize                   Set%   Expected   Observed      Obs%       z
+a 0.07                0.0700        700        701    0.0701    0.04
+PASS a 0.07: |z| = 0.04 < 4
+b 0.03                0.0300        300        306    0.0306    0.35
+PASS b 0.03: |z| = 0.35 < 4
+c 99.9               99.9000     999000     998993   99.8993   -0.22
+PASS c 99.9: |z| = 0.22 < 4
+
+== Rates not summing to 100 (relative)  (500,000 draws) ==
+Prize                   Set%   Expected   Observed      Obs%       z
+x 1                  25.0000     125000     125031   25.0062    0.10
+PASS x 1: |z| = 0.10 < 4
+y 3                  75.0000     375000     374969   74.9938   -0.10
+PASS y 3: |z| = 0.10 < 4
+PASS no stock → -1
+PASS rate 0 → -1
+PASS empty → -1
+PASS randInt(3) stays in range
+PASS randInt(3) chi2=2.6 (df 2)
+PASS randInt(7) stays in range
+PASS randInt(7) chi2=5.8 (df 6)
+PASS randInt(300) stays in range
+PASS randInt(300) chi2=322.2 (df 299)
+PASS randInt(1000003) stays in range
+PASS pickMany returns distinct people
+PASS pickMany fairness, worst z = 3.35
+PASS pickMany clamps to list size
+PASS autoBalance sums to 100: 16.5289, 33.0579, 50.4132, 0
+PASS autoBalance with all zeros → null
+
+ALL TESTS PASSED
