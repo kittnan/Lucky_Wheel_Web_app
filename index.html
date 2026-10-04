@@ -117,10 +117,15 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 .gloss{inset:10.2%;border-radius:50%;pointer-events:none;will-change:transform;
   background:conic-gradient(from 0deg,transparent 0 6%,rgba(255,255,255,.20) 10%,transparent 16% 52%,rgba(255,255,255,.13) 58%,transparent 64%)}
 .gloss2{inset:10.2%;border-radius:50%;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 35% 22%,rgba(255,255,255,.18),transparent 70%)}
-.hub{left:50%;top:50%;width:17%;height:17%;margin:-8.5% 0 0 -8.5%;border-radius:50%;
-  background:radial-gradient(circle at 34% 28%,#fffbe0,#f3d36b 28%,#b88a1c 62%,#5a3f06);
-  box-shadow:0 6px 14px rgba(0,0,0,.7),inset 0 -6px 10px rgba(70,45,0,.7),0 0 0 4px #7c5a0c,0 0 0 6px #f0d56e;display:grid;place-items:center}
-.hub span{font-family:var(--head);font-weight:900;font-size:calc(var(--wheel)*.05);color:#5a1010;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.hub{left:50%;top:50%;width:21%;height:21%;margin:-10.5% 0 0 -10.5%;border-radius:50%;border:0;padding:0;cursor:pointer;z-index:6;color:#fff;
+  background:radial-gradient(circle,#a80d0d 0 56%,transparent 57%),repeating-conic-gradient(#f6f2e4 0 20deg,#a80d0d 20deg 45deg);
+  box-shadow:0 8px 18px rgba(0,0,0,.75),0 0 0 4px #7c5a0c,0 0 0 7px #f0d56e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1%;transition:transform .12s,box-shadow .2s}
+.hub::before{content:"";position:absolute;inset:9%;border-radius:50%;border:2px dashed var(--gold);pointer-events:none}
+.hub span{position:relative;font-family:var(--head);font-weight:900;letter-spacing:.1em;font-size:calc(var(--wheel)*.042);color:var(--gold-hi);text-shadow:0 2px 0 #3a0000,0 0 12px rgba(255,215,90,.6)}
+.hub:hover:not(:disabled){transform:scale(1.07) rotate(-5deg);box-shadow:0 8px 22px rgba(0,0,0,.8),0 0 0 4px #7c5a0c,0 0 0 7px #f0d56e,0 0 30px rgba(255,215,90,.7)}
+.hub:active:not(:disabled){transform:scale(.96)}
+.hub:disabled{cursor:progress;filter:saturate(.6) brightness(.85)}
+.hub:focus-visible{outline:3px solid #fff;outline-offset:6px}
 .pointer{left:50%;top:-1.8%;width:9%;height:13.5%;margin-left:-4.5%;transform-origin:50% 29%;will-change:transform;z-index:5;filter:drop-shadow(0 6px 5px rgba(0,0,0,.6))}
 .pointer svg{width:100%;height:100%;display:block}
 .wheelBox.shake{animation:shake .7s ease-in-out}
@@ -141,10 +146,10 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:16p
 .cab-bulbs{height:10px;margin:0 8px 10px;background:radial-gradient(circle,#ffe58a 0 3px,transparent 4px) 0 0/18px 10px repeat-x;animation:cabb 1s steps(2) infinite}
 @keyframes cabb{50%{opacity:.35}}
 .cab-body{display:flex;gap:10px;align-items:stretch}
-.reels{flex:1;min-width:0;display:grid;grid-template-columns:1.25fr 2.5fr 1.35fr;gap:6px;padding:10px 8px 8px;border-radius:14px;background:#050505;
+.reels{flex:1;min-width:0;display:grid;grid-template-columns:1.35fr 1.25fr 2.5fr;gap:6px;padding:10px 8px 8px;border-radius:14px;background:#050505;
   box-shadow:inset 0 0 0 3px #b8921f,inset 0 0 18px #000,0 0 0 2px #2a1d02}
 .reel-col{min-width:0}
-.reel-col.c0 .cell{font-size:calc(var(--cell)*.3)}.reel-col.c2 .cell{font-size:calc(var(--cell)*.32)}
+.reel-col.c0 .cell{font-size:calc(var(--cell)*.32)}.reel-col.c1 .cell{font-size:calc(var(--cell)*.3)}
 .reel-label{font-family:var(--head);font-size:11px;letter-spacing:.2em;color:var(--gold);text-align:center;margin-bottom:4px}
 .reel{position:relative;height:calc(var(--cell)*3);overflow:hidden;border-radius:8px;background:linear-gradient(90deg,#d9d1b6,#fbf6e4 20%,#fbf6e4 80%,#d9d1b6);box-shadow:inset 0 0 8px rgba(0,0,0,.55)}
 .strip{position:absolute;left:0;right:0;top:0;will-change:transform}
@@ -279,7 +284,7 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
 .brand{display:flex;align-items:center;gap:16px;min-width:0}
 #evLogo{height:clamp(44px,6vw,76px);max-width:200px;object-fit:contain;filter:drop-shadow(0 3px 6px rgba(0,0,0,.6))}
 .logo h1{overflow-wrap:anywhere}
-.hub img{width:78%;height:78%;object-fit:contain;border-radius:50%}
+.hub img{position:relative;width:38%;height:38%;object-fit:contain;border-radius:50%;background:rgba(0,0,0,.35)}
 .odds{padding:12px 14px}
 .odds-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-family:var(--head);letter-spacing:.14em;font-size:13px;color:var(--gold)}
 .odds-h .secure{font-family:var(--body);letter-spacing:0;font-size:11.5px;color:#7fe0b0;border:1px solid rgba(63,196,137,.5);border-radius:99px;padding:2px 9px}
@@ -291,6 +296,19 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
 .od b{color:var(--gold-hi);font-variant-numeric:tabular-nums;min-width:4.6em;text-align:right}
 .od.out{opacity:.45}.od.out b{color:#999}
 .odds-f{margin-top:7px;font-size:11.5px;color:var(--muted)}
+
+#countdown{position:fixed;inset:0;z-index:1040;display:none;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(circle,rgba(0,0,0,.25),rgba(0,0,0,.72));
+  font-family:var(--head);font-weight:900;font-size:clamp(120px,32vw,420px);color:#ffe27a;text-shadow:0 6px 0 #5a3a00,0 0 60px rgba(255,200,40,.9)}
+#countdown.show{display:flex}#countdown.pop{animation:cd .8s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes cd{0%{transform:scale(2.4);opacity:0}35%{transform:scale(.95);opacity:1}100%{transform:scale(1);opacity:1}}
+#practiceBar{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:60;background:linear-gradient(180deg,#b01616,#5e0505);border:1px solid var(--gold);color:#fff;border-radius:99px;padding:6px 8px 6px 18px;font-weight:600;letter-spacing:.06em;display:flex;gap:12px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.6);white-space:nowrap}
+#practiceBar[hidden]{display:none}
+body.practice #frame{border-image:linear-gradient(135deg,#d42a2a,#6b0a0a 50%,#d42a2a) 1}
+.autobar{height:4px;border-radius:4px;background:rgba(255,255,255,.12);margin-top:16px;overflow:hidden}
+.autobar i{display:block;height:100%;background:var(--gold-grad);transform-origin:left;animation:autobar linear forwards}
+@keyframes autobar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.kbd-hint{margin-top:10px;font-size:11.5px;color:var(--muted)}
+kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(212,175,55,.5);border-radius:5px;background:rgba(0,0,0,.5)}
 @media (prefers-reduced-motion:reduce){.spot,.mote{animation:none}}
 </style>
 </head>
@@ -321,7 +339,7 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
           <div class="rim"></div><div class="band"></div><div id="bulbs"></div><div class="discRing"></div>
           <div class="wheelRot" id="wheelRot"><canvas id="wheelCv" width="1100" height="1100"></canvas><canvas id="wheelHl" width="1100" height="1100"></canvas></div>
           <div class="gloss" id="gloss"></div><div class="gloss2"></div>
-          <div class="hub"><span id="hubStar">★</span><img id="hubLogo" alt="" hidden></div>
+          <button class="hub" id="btnSpin" aria-label="Spin the wheel"><img id="hubLogo" alt="" hidden><span>SPIN</span></button>
           <div class="pointer" id="pointer">
             <svg viewBox="0 0 60 90" xmlns="http://www.w3.org/2000/svg"><defs>
               <linearGradient id="gp" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".45" stop-color="#D4AF37"/><stop offset="1" stop-color="#7a5808"/></linearGradient>
@@ -364,10 +382,9 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
           <div id="groupWrap" class="hidden" style="width:96px"><label class="t" for="groupSize">Winners</label><input id="groupSize" type="number" min="2" max="100" value="10"></div>
         </div>
         <label class="chk lock"><input type="checkbox" id="chkExclude"> Exclude previous winners from next draws</label>
-        <div class="spinrow">
-          <button class="chipbtn" id="btnSpin" aria-label="Spin"><span>SPIN</span></button>
-          <div class="hint">Press SPIN or pull the lever<br>Every spin is independent — rates are real.</div>
-        </div>
+        <div class="row lock" id="batchWrap"><label class="t" for="batchN" style="margin:0">Spin in a row</label><input id="batchN" type="number" min="1" max="100" value="1" style="width:84px"><span class="hint" style="text-align:left">winners confirm automatically after a few seconds</span></div>
+        <label class="chk lock"><input type="checkbox" id="chkPractice"> 🧪 Practice mode (nothing is saved)</label>
+        <div class="hint">Press the <b>SPIN</b> button in the middle of the wheel or pull the lever<br><kbd>Space</kbd> spin · <kbd>Enter</kbd> confirm · <kbd>R</kbd> redraw · <kbd>F</kbd> full screen<br>Every spin is independent — rates are real.</div>
       </div>
     </div>
   </section>
@@ -412,6 +429,7 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
           <label class="t" style="font-size:12px;color:var(--gold)" for="selSpeed">Animation length</label>
           <select id="selSpeed"><option value="quick">Quick (about 3 s)</option><option value="normal">Normal (about 8 s)</option><option value="long">Dramatic (about 13 s)</option></select>
           <label class="chk"><input type="checkbox" id="chkSound2"> Sound effects</label>
+          <label class="chk"><input type="checkbox" id="chkCountdown"> 3-2-1 countdown before each spin</label>
           <label class="chk"><input type="checkbox" id="chkWake"> Keep screen awake</label><p id="wakeState"></p></div>
         <div class="card"><b>Appearance &amp; Event</b>
           <input id="inTitle" maxlength="40" placeholder="Event title (e.g. ANNUAL PARTY 2026)">
@@ -436,6 +454,8 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
   </section>
 </div>
 
+<div id="countdown" aria-hidden="true"></div>
+<div id="practiceBar" hidden>🧪 PRACTICE MODE — results are NOT saved <button class="btn sm" id="btnPracticeExit">Exit practice</button></div>
 <div id="jackpot"><div class="jpframe"></div><div class="jpframe b"></div><h1>JACKPOT!</h1><p id="jpPrize"></p></div>
 <div id="toasts" aria-live="polite"></div>
 
@@ -566,11 +586,14 @@ const LS_KEY = 'luckyWheel.casino.v1';
 const PALETTE = ['#8B0000', '#141414', '#0B5D3B', '#a31515', '#222222', '#0e7a4d'];
 const S = {
   prizes: [], participants: [], history: [], nextPid: 1, skip: new Set(),
-  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false, wake: true }
+  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false, wake: true, batch: 1, countdown: true }
 };
 let storageWarned = false;
+let PRACTICE = null;              // JSON snapshot of real data while practice mode is on
+let batchStop = false, batchInfo = '', lastWin = null;
 const stateObj = () => ({ v: 1, prizes: S.prizes, participants: S.participants, history: S.history, nextPid: S.nextPid, settings: S.settings });
 function save() {
+  if (PRACTICE) return;
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(stateObj()));
   } catch (e) { if (!storageWarned) { storageWarned = true; toast('Could not save to browser storage — data will be lost on refresh.', 'warn'); } }
@@ -611,7 +634,7 @@ function sanitizeLoaded(d) {
   if (!['green', 'royal', 'crimson', 'midnight'].includes(st.theme)) st.theme = 'green';
   st.title = String(st.title ?? '').slice(0, 40); st.subtitle = String(st.subtitle ?? '').slice(0, 60);
   if (typeof st.logo !== 'string' || !/^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,/.test(st.logo) || st.logo.length > 400000) st.logo = '';
-  st.autoBackup = !!st.autoBackup; st.wake = st.wake !== false;
+  st.autoBackup = !!st.autoBackup; st.wake = st.wake !== false; st.countdown = st.countdown !== false; st.batch = Math.max(1, Math.min(100, Math.floor(Number(st.batch)) || 1));
   return out;
 }
 // Deterministic demo data
@@ -691,6 +714,7 @@ const Sfx = (() => {
     coin(n = 14) { for (let i = 0; i < n; i++) { const f = 1900 + rand01() * 1400, t = i * .07 + rand01() * .03; tone(f, t, .38, 'sine', .09); tone(f * 1.5, t, .22, 'sine', .04); } },
     fanfare() { [523.25, 659.25, 783.99, 1046.5, 783.99, 1046.5, 1318.5].forEach((f, i) => { tone(f, i * .13, .32, 'triangle', .2); tone(f / 2, i * .13, .32, 'sawtooth', .05); }); },
     bell() { for (let k = 0; k < 9; k++) [1046.5, 1318.5, 1568, 2093].forEach((f, j) => tone(f, k * .17 + j * .01, 1.1, 'sine', .11 / (1 + j * .4))); },
+    beep(f, d) { tone(f, 0, d, 'sine', .28); tone(f * 2, 0, d, 'triangle', .06); },
     pop() { tone(700, 0, .08, 'sine', .15, 1400); }
   };
 })();
@@ -813,7 +837,7 @@ const Pointer = (() => {
 const Wheel = (() => {
   const cv = $('#wheelCv'), hl = $('#wheelHl'), rot = $('#wheelRot'), gloss = $('#gloss'), zoom = $('#wheelZoom'), box = $('#wheelBox'), dim = $('#dim');
   const c = cv.getContext('2d'), hc = hl.getContext('2d');
-  const W = 1100, CX = 550, R = 534, HUB = 128;
+  const W = 1100, CX = 550, R = 534, HUB = 142;
   let slices = [], seg = 30, theta = 0, lastSlice = -1;
   function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const r = Math.round((n >> 16) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f); return `rgb(${r},${g},${b})`; }
   function lum(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; }
@@ -941,7 +965,8 @@ const Wheel = (() => {
    8. SLOT MACHINE
    ===================================================================== */
 const Slot = (() => {
-  const defs = [{ label: 'ID', val: p => p.id }, { label: 'NAME', val: p => p.name }, { label: 'DEPARTMENT', val: p => p.dept || '—' }];
+  // reel order on the machine: Department | ID | Name   (fi = index into the [id, name, dept] values passed to spin)
+  const defs = [{ label: 'DEPARTMENT', fi: 2, val: p => p.dept || '—' }, { label: 'ID', fi: 0, val: p => p.id }, { label: 'NAME', fi: 1, val: p => p.name }];
   const host = $('#reels'); const reels = [];
   defs.forEach(d => {
     const col = document.createElement('div'); col.className = 'reel-col c' + reels.length;
@@ -961,21 +986,28 @@ const Slot = (() => {
   }
   reels.forEach(r => setStatic(r, '', '?', ''));
   const easeOut = t => 1 - Math.pow(1 - t, 3);
-  // finals: [idText, nameText, deptText]; pool: participants for filler cells
+  // finals: [idText, nameText, deptText]; pool: participants used for the rows that scroll past.
+  // Every row is ONE real participant shown across all three reels, and the rows above / below the winner are kept
+  // exactly as they scroll in (no swap when a reel locks), so what you see while spinning == what you see when it stops.
   function spin(finals, pool) {
     return new Promise(resolve => {
       const H = reels[0].strip.children[0].offsetHeight || 64;
       const dur = [2400, 3300, 4200].map(T);
+      const pick = () => pool.length ? pool[Engine.randInt(pool.length)] : null;
+      const travel = k => Math.max(5, Math.round(33 * dur[k] / 3000));      // rows each reel travels: same scroll speed on every reel
+      const seq = Array.from({ length: Math.max(...dur.map((_, k) => travel(k))) }, pick);   // shared row sequence → rows line up across reels
+      const rowA = pick(), rowB = pick();                                    // neighbours of the winning row
       let done = 0;
       reels.forEach((r, k) => {
-        const N = Math.round((26 + k * 12) * (SPD < 1 ? .6 : 1));
-        const fill = () => pool.length ? r.def.val(pool[Engine.randInt(pool.length)]) : '—';
-        const items = [fill(), r.cur];
-        for (let i = 0; i < N; i++) items.push(fill());
-        const tailUp = fill(), tailDn = fill();
-        items.push(finals[k], tailDn);
+        const txt = p => p ? r.def.val(p) : '—';
+        const F = travel(k) - 3;                                              // filler rows between the old rows and the new ones
+        const items = [r.up, r.cur, r.dn];                                    // what is on screen right now stays exactly as is
+        for (let i = 0; i < F; i++) items.push(txt(seq[i]));
+        const above = txt(rowA), win = finals[r.def.fi], below = txt(rowB);
+        items.push(above, win, below);
         r.strip.replaceChildren(...items.map(mkCell)); r.strip.style.transform = 'translateY(0)';
-        const dist = (items.length - 3) * H; // centre moves from index 1 to index items.length-2
+        for (const c of [...r.strip.children].slice(-3)) fit(c);
+        const dist = (items.length - 3) * H;                                  // winning row (index length-2) ends in the middle line
         const t0 = performance.now(); let prevY = 0, prevT = t0, lastCell = 0;
         function frame(now) {
           const t = Math.min(1, (now - t0) / dur[k]), y = dist * easeOut(t);
@@ -985,7 +1017,7 @@ const Slot = (() => {
           const cellIdx = Math.floor(y / H); if (cellIdx > lastCell) { lastCell = cellIdx; if (k === 1) Sfx.reelTick(); }
           if (t < 1) requestAnimationFrame(frame);
           else {
-            setStatic(r, tailUp, finals[k], tailDn); r.streak.style.opacity = 0;
+            setStatic(r, above, win, below); r.streak.style.opacity = 0;       // same three rows → no visible change
             r.win.classList.remove('locked'); void r.win.offsetWidth; r.win.classList.add('locked'); Sfx.thunk();
             if (++done === reels.length) resolve();
           }
@@ -1208,7 +1240,7 @@ function renderControls() {
   $('#groupWrap').classList.toggle('hidden', S.settings.mode !== 'group');
   $('#groupSize').value = S.settings.groupSize;
   $('#chkExclude').checked = S.settings.exclude;
-  $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup; $('#chkWake').checked = S.settings.wake;
+  $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup; $('#chkWake').checked = S.settings.wake; $('#chkCountdown').checked = S.settings.countdown; $('#batchN').value = S.settings.batch; $('#batchWrap').classList.toggle('hidden', S.settings.mode === 'group');
   applyBrand();
   $('#btnSound').textContent = S.settings.sound ? '🔊 Sound' : '🔇 Muted';
   SPD = S.settings.quick ? .35 : ({ quick: .35, normal: 1, long: 1.6 }[S.settings.speed] || 1);
@@ -1268,7 +1300,7 @@ const caption = t => { $('#wheelCap').textContent = t; };
 const centerOf = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
 
 async function wheelPhase(pi, short) {
-  caption('Spinning…');
+  caption((batchInfo ? batchInfo + ' · ' : '') + 'Spinning…');
   const r = await Wheel.spinTo(pi, short);
   await prizeReveal(S.prizes[pi], r.slice);
 }
@@ -1304,14 +1336,22 @@ function winnerInner(person, prize, effRate, remainingAfter, actions) {
       <div class="inv-won">— YOU WON —</div><div class="inv-prize">${esc(prize.name)}</div>
       <span class="inv-rate">Drop rate ${fmtRate(effRate)}% · ${remainingAfter} left after this</span>${actions}`;
 }
-function winnerCard(person, prize, effRate, remainingAfter, canRedraw) {
+function winnerCard(person, prize, effRate, remainingAfter, canRedraw, auto) {
   return new Promise(resolve => {
     const jp = prize.rate > 0 && prize.rate < 1;
     const ov = document.createElement('div'); ov.className = 'ov';
     ov.innerHTML = `<div class="invite${jp ? ' jp' : ''}" role="dialog" aria-modal="true">${winnerInner(person, prize, effRate, remainingAfter,
-      `<div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winner</button>${canRedraw ? '<button class="btn" data-a="redraw">↻ Redraw (not present)</button>' : ''}<button class="btn sm" data-a="discard">Discard</button></div>`)}</div>`;
-    ov.addEventListener('click', e => { const b = e.target.closest('button[data-a]'); if (!b) return; $$('button', ov).forEach(x => x.disabled = true); ov.remove(); resolve(b.dataset.a); });
+      `${auto ? `<div class="autobar"><i style="animation-duration:${auto.ms}ms"></i></div>` : ''}<div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm${auto ? ' &amp; Next' : ' Winner'}</button>${canRedraw ? '<button class="btn" data-a="redraw">↻ Redraw (not present)</button>' : ''}${auto ? '<button class="btn sm" data-stop>■ Stop after this</button>' : ''}<button class="btn sm" data-a="discard">Discard</button></div>
+       <div class="kbd-hint"><kbd>Enter</kbd> confirm · <kbd>R</kbd> redraw${auto ? ' · confirms automatically when the bar runs out' : ''}</div>`)}</div>`;
+    let timer = null;
+    const finish = a => { clearTimeout(timer); $$('button', ov).forEach(x => x.disabled = true); ov.remove(); resolve(a); };
+    ov.addEventListener('click', e => {
+      const st = e.target.closest('button[data-stop]');
+      if (st) { batchStop = !batchStop; st.textContent = batchStop ? '■ Will stop after this' : '■ Stop after this'; st.classList.toggle('gold', batchStop); return; }
+      const b = e.target.closest('button[data-a]'); if (b) finish(b.dataset.a);
+    });
     document.body.appendChild(ov);
+    if (auto) timer = setTimeout(() => finish('confirm'), auto.ms);
   });
 }
 function groupCard(persons, prize, effRate, getMore) {
@@ -1321,7 +1361,7 @@ function groupCard(persons, prize, effRate, getMore) {
       <div class="inv-sub">Congratulations! Each of these players wins:</div><div class="inv-prize" style="margin-bottom:10px">${esc(prize.name)}</div>
       <div class="tbl-wrap" style="text-align:left;max-height:46vh"><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Department</th><th>Present</th></tr></thead><tbody id="gBody"></tbody></table></div>
       <div class="inv-rate" style="margin-top:12px">Drop rate ${fmtRate(effRate)}% · uncheck anyone who is absent, then “Redraw Absent”</div>
-      <div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winners</button><button class="btn" data-a="redraw">↻ Redraw Absent</button><button class="btn sm" data-a="discard">Discard</button></div></div>`;
+      <div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winners</button><button class="btn" data-a="redraw">↻ Redraw Absent</button><button class="btn sm" data-a="discard">Discard</button></div><div class="kbd-hint"><kbd>Enter</kbd> confirm · <kbd>R</kbd> redraw absent</div></div>`;
     const body = $('#gBody', ov);
     const render = (anim) => {
       body.innerHTML = persons.map((p, i) => `<tr style="${anim ? `animation:pop .4s ${(i * 0.07).toFixed(2)}s both` : ''}"><td>${i + 1}</td><td>${esc(p.id)}</td><td><b>${esc(p.name)}</b></td><td>${esc(p.dept)}</td><td><input type="checkbox" checked data-i="${i}"></td></tr>`).join('');
@@ -1353,36 +1393,41 @@ function commit(prize, persons, effRate, audit) {
     prize.qty--; n++;
   });
   S.skip.clear(); save(); refreshAll(); snap('Draw confirmed: ' + prize.name);
-  if (S.settings.autoBackup) downloadBackup(true);
+  if (S.settings.autoBackup && !PRACTICE) downloadBackup(true);
   return n;
 }
 
-async function startDraw() {
-  if (busy) return;
+async function drawOnce(outer, opts) {
+  opts = opts || {};
+  if (busy && !outer) return 'blocked';
+  const bail = (m, t) => { toast(m, t || 'warn'); return 'blocked'; };
+  let status = 'ok';
   const st = S.settings, group = st.mode === 'group';
   // ---- validation (synchronous, before locking) ----
-  if (!S.prizes.length) return toast('There are no prizes yet. Add prizes or import an Excel file first.', 'warn');
+  if (!S.prizes.length) return bail('There are no prizes yet. Add prizes or import an Excel file first.', 'warn');
   let pi = -1;
   if (st.prizeChoice === 'random') {
-    if (group) return toast('Group Draw needs a specific prize — pick one in the “Prize” list.', 'warn');
-    if (!S.prizes.some(p => p.qty > 0)) return toast('All prizes have been given out. Add stock or reset the results.', 'warn');
-    if (!S.prizes.some(p => Engine.isAvailable(p))) return toast('The remaining prizes all have a 0% rate, so none can be drawn. Check the prize rates.', 'warn');
+    if (group) return bail('Group Draw needs a specific prize — pick one in the “Prize” list.', 'warn');
+    if (!S.prizes.some(p => p.qty > 0)) return bail('All prizes have been given out. Add stock or reset the results.', 'warn');
+    if (!S.prizes.some(p => Engine.isAvailable(p))) return bail('The remaining prizes all have a 0% rate, so none can be drawn. Check the prize rates.', 'warn');
   } else {
     pi = S.prizes.findIndex(p => String(p.id) === String(st.prizeChoice));
-    if (pi < 0 || S.prizes[pi].qty <= 0) { st.prizeChoice = 'random'; renderPrizes(); return toast('That prize is no longer available. Please choose another.', 'warn'); }
+    if (pi < 0 || S.prizes[pi].qty <= 0) { st.prizeChoice = 'random'; renderPrizes(); return bail('That prize is no longer available. Please choose another.', 'warn'); }
   }
-  if (!S.participants.length) return toast('There are no participants yet. Add people or import an Excel file first.', 'warn');
+  if (!S.participants.length) return bail('There are no participants yet. Add people or import an Excel file first.', 'warn');
   const elig0 = eligible();
-  if (!elig0.length) return toast('No participants left to draw — everyone has already won. Turn off “Exclude previous winners” or reset results.', 'warn');
+  if (!elig0.length) return bail('No participants left to draw — everyone has already won. Turn off “Exclude previous winners” or reset results.', 'warn');
   let n = 1;
   if (group) {
     n = Math.floor(Number($('#groupSize').value));
-    if (!isFinite(n) || n < 1) return toast('Enter how many winners to draw (1 or more).', 'warn');
+    if (!isFinite(n) || n < 1) return bail('Enter how many winners to draw (1 or more).', 'warn');
     st.groupSize = n;
   }
-  setBusy(true);
-  Sfx.unlock(); Slot.pull();
+  if (!outer) setBusy(true);
+  Sfx.unlock();
   try {
+    if (opts.countdown && st.countdown) await countdown(3);
+    Slot.pull();
     // ---- decide EVERYTHING before any animation ----
     if (st.prizeChoice === 'random') pi = Engine.pickPrize(S.prizes);
     if (pi < 0) throw new Error('no drawable prize');
@@ -1403,30 +1448,75 @@ async function startDraw() {
       const getMore = (keep, absent, k) => { absent.forEach(a => S.skip.add(a.id)); const ex = new Set(keep.map(p => p.id)); return Engine.pickMany(eligible(S.skip).filter(p => !ex.has(p.id)), k); };
       const res = await groupCard(persons, prize, effRate, getMore);
       if (res.a === 'confirm') { const c = commit(prize, res.persons, effRate, audit); toast(`Saved ${c} winner(s) for “${prize.name}”.`, 'success'); caption('✔ ' + c + ' winners confirmed'); }
-      else caption('Draw discarded');
+      else { caption('Draw discarded'); status = 'discard'; }
     } else {
       let person = elig0[Engine.randInt(elig0.length)];
       if (st.mode === 'person-first') { await slotPhase(person, elig0); await sleep(T(300)); await wheelPhase(pi, false); }
       else { await wheelPhase(pi, false); await sleep(T(200)); await slotPhase(person, elig0); }
       celebrateFinal(jackpot);
       for (;;) {
-        const res = await winnerCard(person, prize, effRate, prize.qty - 1, true);
-        if (res === 'confirm') { commit(prize, [person], effRate, audit); toast(`${person.name} won “${prize.name}”.`, 'success'); caption('✔ ' + person.name); break; }
-        if (res === 'discard') { caption('Draw discarded'); break; }
+        const res = await winnerCard(person, prize, effRate, prize.qty - 1, true, opts.auto ? { ms: Math.max(2500, T(4500)) } : null);
+        if (res === 'confirm') { commit(prize, [person], effRate, audit); lastWin = { person, prize }; toast(`${person.name} won “${prize.name}”.`, 'success'); caption('✔ ' + person.name); break; }
+        if (res === 'discard') { caption('Draw discarded'); status = 'discard'; break; }
         // redraw: same prize, new person (absent person excluded for this redraw only)
         S.skip.add(person.id);
         const pool = eligible(S.skip);
-        if (!pool.length) { toast('No other participants available — draw discarded.', 'warn'); caption('Draw discarded'); break; }
+        if (!pool.length) { toast('No other participants available — draw discarded.', 'warn'); caption('Draw discarded'); status = 'discard'; break; }
         person = pool[Engine.randInt(pool.length)];
         await slotPhase(person, pool); celebrateFinal(jackpot);
       }
     }
   } catch (e) {
-    console.error(e); toast('Something went wrong during the draw. Nothing was saved — please try again.', 'error');
+    console.error(e); status = 'error'; toast('Something went wrong during the draw. Nothing was saved — please try again.', 'error');
+    $('#countdown').classList.remove('show');
   } finally {
     S.skip.clear(); Wheel.endSuspense(); Wheel.clearHighlight(); $('#jackpot').classList.remove('show'); FX.clear();
-    save(); refreshAll(); setBusy(false);
+    save(); refreshAll(); if (!outer) setBusy(false);
   }
+  return status;
+}
+
+
+async function countdown(n) {
+  const el = $('#countdown'); el.classList.add('show');
+  const show = txt => { el.textContent = txt; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); };
+  for (let i = n; i >= 1; i--) { show(i); Sfx.beep(520 + (n - i) * 90, .14); await sleep(T(850)); }
+  show('GO!'); Sfx.beep(1040, .35); await sleep(T(550));
+  el.classList.remove('show');
+}
+async function startDraw() {
+  if (busy) return;
+  const st = S.settings;
+  if (st.mode === 'group') return drawOnce(false, { countdown: true });
+  const total = Math.max(1, Math.min(100, Math.floor(Number($('#batchN').value)) || 1));
+  st.batch = total; $('#batchN').value = total; save();
+  if (total === 1) return drawOnce(false, { countdown: true });
+  setBusy(true); batchStop = false; const won = [];
+  try {
+    for (let i = 0; i < total; i++) {
+      batchInfo = `Spin ${i + 1} of ${total}`; lastWin = null;
+      const r = await drawOnce(true, { auto: true, countdown: i === 0 });
+      if (r === 'ok' && lastWin) won.push(lastWin);
+      if (r !== 'ok' || batchStop) break;
+    }
+  } finally { batchInfo = ''; batchStop = false; setBusy(false); }
+  if (won.length) {
+    openModal({ title: `Batch complete — ${won.length} of ${total} spins`, html: `<div class="tbl-wrap" style="max-height:60vh"><table><thead><tr><th>#</th><th>Winner</th><th>ID</th><th>Prize</th></tr></thead><tbody>${won.map((w, i) => `<tr><td>${i + 1}</td><td><b>${esc(w.person.name)}</b></td><td>${esc(w.person.id)}</td><td>${esc(w.prize.name)}</td></tr>`).join('')}</tbody></table></div>${won.length < total ? '<p class="hint" style="text-align:left">Stopped early.</p>' : ''}`, buttons: [{ label: 'Close', cls: 'gold' }] });
+  }
+}
+
+// ---- practice mode: real draws on a throw-away copy; nothing is written to storage ----
+function enterPractice() {
+  if (busy || PRACTICE) return;
+  PRACTICE = JSON.stringify(stateObj()); document.body.classList.add('practice'); $('#practiceBar').hidden = false; $('#chkPractice').checked = true;
+  toast('Practice mode ON — draw as much as you like. Real data is untouched.', 'info', 6000);
+}
+function exitPractice() {
+  if (!PRACTICE) return;
+  const c = sanitizeLoaded(JSON.parse(PRACTICE)); PRACTICE = null;
+  S.prizes = c.prizes; S.participants = c.participants; S.history = c.history; S.nextPid = c.nextPid; S.skip.clear();
+  document.body.classList.remove('practice'); $('#practiceBar').hidden = true; $('#chkPractice').checked = false;
+  refreshAll(); save(); toast('Practice mode OFF — your real data is back.', 'success');
 }
 
 /* =====================================================================
@@ -1437,7 +1527,7 @@ function applyBrand() {
   $('#evTitle').textContent = t; $('#evSub').textContent = st.subtitle; $('#evSub').classList.toggle('hidden', !st.subtitle.trim());
   document.title = t + ' – Prize Draw'; document.body.dataset.theme = st.theme;
   const has = !!st.logo;
-  $('#evLogo').hidden = !has; $('#hubLogo').hidden = !has; $('#hubStar').hidden = has;
+  $('#evLogo').hidden = !has; $('#hubLogo').hidden = !has;
   if (has) { if ($('#evLogo').getAttribute('src') !== st.logo) { $('#evLogo').src = st.logo; $('#hubLogo').src = st.logo; } }
   else { $('#evLogo').removeAttribute('src'); $('#hubLogo').removeAttribute('src'); }
   if ($('#inTitle') !== document.activeElement) $('#inTitle').value = st.title;
@@ -1462,7 +1552,8 @@ function fileToLogo(file) {
 
 const SNAP_KEY = 'luckyWheel.snaps.v1';
 const readSnaps = () => { try { const a = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
-function snap(reason) {                    // rolling safety copies inside the browser (last 8)
+function snap(reason) {
+  if (PRACTICE) return;                    // rolling safety copies inside the browser (last 8)
   const entry = { ts: Date.now(), reason, data: stateObj() };
   let list = readSnaps(); list.push(entry); list = list.slice(-8);
   for (let tries = 0; tries < 6; tries++) {
@@ -1532,7 +1623,11 @@ function initOffline() {
    ===================================================================== */
 // While a draw is running, swallow clicks on everything inside #app except items flagged data-allow
 $('#app').addEventListener('click', e => {
-  if (busy && !e.target.closest('[data-allow]')) { e.stopPropagation(); e.preventDefault(); }
+  if (busy && !e.target.closest('[data-allow]')) { e.stopPropagation(); e.preventDefault(); return; }
+  if (PRACTICE && e.target.closest('#tabsSection')) {      // editing / importing / exporting while practising would be lost → block
+    const b = e.target.closest('button');
+    if (b && !b.closest('.tabbar') && b.id !== 'btnSim') { e.stopPropagation(); e.preventDefault(); toast('Exit practice mode first — changes made now would not be kept.', 'warn'); }
+  }
 }, true);
 $('#app').addEventListener('keydown', e => { if (busy && (e.key === 'Enter' || e.key === ' ') && !e.target.closest('[data-allow]')) e.preventDefault(); }, true);
 
@@ -1542,6 +1637,10 @@ $('#lever').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preve
 $('#modeSeg').onclick = e => { const b = e.target.closest('button[data-mode]'); if (!b || busy) return; S.settings.mode = b.dataset.mode; save(); renderControls(); };
 $('#prizeChoice').onchange = e => { if (busy) return; S.settings.prizeChoice = e.target.value; save(); };
 $('#groupSize').onchange = e => { const v = Math.floor(Number(e.target.value)); S.settings.groupSize = isFinite(v) && v >= 1 ? v : 10; e.target.value = S.settings.groupSize; save(); };
+$('#chkPractice').onchange = e => { if (busy) { e.target.checked = !!PRACTICE; return; } e.target.checked ? enterPractice() : exitPractice(); };
+$('#btnPracticeExit').onclick = exitPractice;
+$('#batchN').onchange = e => { const v = Math.max(1, Math.min(100, Math.floor(Number(e.target.value)) || 1)); e.target.value = v; S.settings.batch = v; save(); };
+$('#chkCountdown').onchange = e => { S.settings.countdown = e.target.checked; save(); };
 $('#chkExclude').onchange = e => { if (busy) { e.target.checked = S.settings.exclude; return; } S.settings.exclude = e.target.checked; save(); renderPeople(); renderStats(); };
 $('#selSpeed').onchange = e => { S.settings.speed = e.target.value; S.settings.quick = false; save(); renderControls(); };
 function setSound(v) { S.settings.sound = v; save(); renderControls(); if (v) { Sfx.unlock(); Sfx.pop(); } }
@@ -1615,6 +1714,25 @@ $('#btnResetAll').onclick = async () => {
   snap('Before erase all'); const keep = { sound: S.settings.sound }; loadDemo(); Object.assign(S.settings, keep); save(); refreshAll(); toast('All data reset to the demo set.', 'success');
 };
 document.addEventListener('pointerdown', () => Sfx.unlock(), { once: true });
+// ---- keyboard shortcuts (for presentation remotes / keyboards) ----
+let spaceHandled = false;
+document.addEventListener('change', e => { if (e.target.matches && e.target.matches('input[type=checkbox],select')) e.target.blur(); });   // keep Space free for SPIN
+document.addEventListener('keydown', e => {
+  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+  const card = document.querySelector('.invite');
+  if (card) {
+    const k = e.key.toLowerCase(), pick = k === 'enter' ? 'confirm' : k === 'r' ? 'redraw' : null;
+    const b = pick && card.querySelector(`[data-a=${pick}]`);
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+    return;
+  }
+  if (document.querySelector('.ov')) return;
+  if (e.key === ' ') { e.preventDefault(); spaceHandled = true; startDraw(); }
+  else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); $('#btnFull').click(); }
+});
+document.addEventListener('keyup', e => { if (e.key === ' ' && spaceHandled) { spaceHandled = false; e.preventDefault(); } });
 $('#inTitle').oninput = e => { S.settings.title = e.target.value; applyBrand(); save(); };
 $('#inSub').oninput = e => { S.settings.subtitle = e.target.value; applyBrand(); save(); };
 $('#selTheme').onchange = e => { S.settings.theme = e.target.value; applyBrand(); save(); };
