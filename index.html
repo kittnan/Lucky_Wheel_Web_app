@@ -411,7 +411,8 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
         <div class="card"><b>Settings</b>
           <label class="t" style="font-size:12px;color:var(--gold)" for="selSpeed">Animation length</label>
           <select id="selSpeed"><option value="quick">Quick (about 3 s)</option><option value="normal">Normal (about 8 s)</option><option value="long">Dramatic (about 13 s)</option></select>
-          <label class="chk"><input type="checkbox" id="chkSound2"> Sound effects</label></div>
+          <label class="chk"><input type="checkbox" id="chkSound2"> Sound effects</label>
+          <label class="chk"><input type="checkbox" id="chkWake"> Keep screen awake</label><p id="wakeState"></p></div>
         <div class="card"><b>Appearance &amp; Event</b>
           <input id="inTitle" maxlength="40" placeholder="Event title (e.g. ANNUAL PARTY 2026)">
           <input id="inSub" maxlength="60" placeholder="Subtitle (e.g. Grand Prize Draw)">
@@ -565,7 +566,7 @@ const LS_KEY = 'luckyWheel.casino.v1';
 const PALETTE = ['#8B0000', '#141414', '#0B5D3B', '#a31515', '#222222', '#0e7a4d'];
 const S = {
   prizes: [], participants: [], history: [], nextPid: 1, skip: new Set(),
-  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false }
+  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false, wake: true }
 };
 let storageWarned = false;
 const stateObj = () => ({ v: 1, prizes: S.prizes, participants: S.participants, history: S.history, nextPid: S.nextPid, settings: S.settings });
@@ -573,6 +574,11 @@ function save() {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(stateObj()));
   } catch (e) { if (!storageWarned) { storageWarned = true; toast('Could not save to browser storage — data will be lost on refresh.', 'warn'); } }
+}
+function sanitizeAudit(a) {
+  if (!a || typeof a !== 'object') return null;
+  const n = v => (isFinite(Number(v)) ? Number(v) : null);
+  return { d: n(a.d), m: ['person-first', 'prize-first', 'group'].includes(a.m) ? a.m : '', sr: n(a.sr), sb: n(a.sb), el: n(a.el), od: String(a.od ?? '').slice(0, 2500) };
 }
 function sanitizeLoaded(d) {
   const out = { prizes: [], participants: [], history: [] };
@@ -596,7 +602,7 @@ function sanitizeLoaded(d) {
   });
   (Array.isArray(d.history) ? d.history : []).forEach(h => {
     if (!h || typeof h.prize !== 'string') return;
-    out.history.push({ ts: Number(h.ts) || Date.now(), empId: String(h.empId ?? ''), name: String(h.name ?? ''), dept: String(h.dept ?? ''), prize: h.prize, prizeId: Number(h.prizeId) || 0, rate: Number(h.rate) || 0 });
+    out.history.push({ ts: Number(h.ts) || Date.now(), empId: String(h.empId ?? ''), name: String(h.name ?? ''), dept: String(h.dept ?? ''), prize: h.prize, prizeId: Number(h.prizeId) || 0, rate: Number(h.rate) || 0, a: sanitizeAudit(h.a) });
   });
   out.nextPid = Math.max(mx + 1, Number(d.nextPid) || 1);
   out.settings = Object.assign({}, S.settings, d.settings && typeof d.settings === 'object' ? d.settings : {});
@@ -605,7 +611,7 @@ function sanitizeLoaded(d) {
   if (!['green', 'royal', 'crimson', 'midnight'].includes(st.theme)) st.theme = 'green';
   st.title = String(st.title ?? '').slice(0, 40); st.subtitle = String(st.subtitle ?? '').slice(0, 60);
   if (typeof st.logo !== 'string' || !/^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,/.test(st.logo) || st.logo.length > 400000) st.logo = '';
-  st.autoBackup = !!st.autoBackup;
+  st.autoBackup = !!st.autoBackup; st.wake = st.wake !== false;
   return out;
 }
 // Deterministic demo data
@@ -1022,12 +1028,24 @@ function templatePeople() {
 function exportResults() {
   if (!S.history.length) { toast('No results to export yet — run a draw first.', 'warn'); return; }
   if (!needXlsx()) return;
+  const wb = XLSX.utils.book_new();
+  // Sheet 1 – results (as required)
   const rows = [['No.', 'Date/Time', 'Employee ID', 'Winner Name', 'Department', 'Prize', 'Prize Rate (%)']];
   S.history.forEach((h, i) => rows.push([i + 1, fmtDate(h.ts), String(h.empId), h.name, h.dept, h.prize, +Number(h.rate).toFixed(4)]));
-  const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, sheetFromRows(rows, [6, 20, 14, 30, 24, 36, 14]), 'Results');
+  // Sheet 2 – audit log: what the odds and stock were when each winner was drawn
+  const MODE = { 'person-first': 'Winner then Prize', 'prize-first': 'Prize then Winner', group: 'Group Draw' };
+  const oddsByDraw = {}; S.history.forEach(h => { if (h.a && h.a.od) oddsByDraw[h.a.d] = h.a.od; });
+  const audit = [['No.', 'Date/Time', 'Draw Mode', 'Prize', 'Set Rate (%)', 'Live Rate at Draw (%)', 'Stock Before', 'Stock After', 'Eligible Participants', 'Employee ID', 'Winner Name', 'Random Source', 'All Live Odds at Draw Time']];
+  S.history.forEach((h, i) => { const a = h.a || {}; audit.push([i + 1, fmtDate(h.ts), MODE[a.m] || '', h.prize, a.sr ?? '', +Number(h.rate).toFixed(4), a.sb ?? '', a.sb != null ? a.sb - 1 : '', a.el ?? '', String(h.empId), h.name, a.m ? 'crypto.getRandomValues' : '', oddsByDraw[a.d] || '']); });
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(audit, [6, 20, 18, 34, 12, 18, 12, 12, 18, 14, 28, 24, 90]), 'Audit Log');
+  // Sheet 3 – prize summary
+  const given = {}; S.history.forEach(h => { given[h.prize] = (given[h.prize] || 0) + 1; });
+  const sum = [['Prize', 'Initial Quantity', 'Given Out', 'Remaining', 'Set Rate (%)']];
+  S.prizes.forEach(p => sum.push([p.name, p.total, given[p.name] || 0, p.qty, +Number(p.rate).toFixed(4)]));
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(sum, [36, 16, 12, 12, 14]), 'Prize Summary');
   downloadBook(wb, `Lucky_Draw_Results_${todayStr()}.xlsx`);
-  toast('Results exported.', 'success');
+  toast('Results exported (Results, Audit Log, Prize Summary).', 'success');
 }
 const norm = s => String(s ?? '').toLowerCase().replace(/[^a-z0-9฀-๿]/g, '');
 async function readRows(file) {
@@ -1190,7 +1208,7 @@ function renderControls() {
   $('#groupWrap').classList.toggle('hidden', S.settings.mode !== 'group');
   $('#groupSize').value = S.settings.groupSize;
   $('#chkExclude').checked = S.settings.exclude;
-  $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup;
+  $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup; $('#chkWake').checked = S.settings.wake;
   applyBrand();
   $('#btnSound').textContent = S.settings.sound ? '🔊 Sound' : '🔇 Muted';
   SPD = S.settings.quick ? .35 : ({ quick: .35, normal: 1, long: 1.6 }[S.settings.speed] || 1);
@@ -1326,9 +1344,14 @@ function groupCard(persons, prize, effRate, getMore) {
     document.body.appendChild(ov);
   });
 }
-function commit(prize, persons, effRate) {
+function commit(prize, persons, effRate, audit) {
   const ts = Date.now(); let n = 0;
-  persons.forEach(p => { if (prize.qty <= 0) return; S.history.push({ ts: ts + n, empId: p.id, name: p.name, dept: p.dept || '', prize: prize.name, prizeId: prize.id, rate: effRate }); prize.qty--; n++; });
+  persons.forEach(p => {
+    if (prize.qty <= 0) return;
+    S.history.push({ ts: ts + n, empId: p.id, name: p.name, dept: p.dept || '', prize: prize.name, prizeId: prize.id, rate: effRate,
+      a: { d: ts, m: audit.mode, sr: prize.rate, sb: prize.qty, el: audit.eligible, od: n === 0 ? audit.odds : '' } });
+    prize.qty--; n++;
+  });
   S.skip.clear(); save(); refreshAll(); snap('Draw confirmed: ' + prize.name);
   if (S.settings.autoBackup) downloadBackup(true);
   return n;
@@ -1364,7 +1387,9 @@ async function startDraw() {
     if (st.prizeChoice === 'random') pi = Engine.pickPrize(S.prizes);
     if (pi < 0) throw new Error('no drawable prize');
     const prize = S.prizes[pi];
-    const effRate = Engine.liveRates(S.prizes)[pi];                  // real chance this prize had on this spin
+    const liveNow = Engine.liveRates(S.prizes), effRate = liveNow[pi];   // real chance this prize had on this spin
+    const audit = { mode: st.mode, eligible: elig0.length,
+      odds: S.prizes.map((q, i) => liveNow[i] > 0 ? `${q.name}: ${fmtRate(liveNow[i])}% (${q.qty} left)` : null).filter(Boolean).join(' | ').slice(0, 2500) };
     const jackpot = prize.rate > 0 && prize.rate < 1;
     S.skip.clear();
     if (group) {
@@ -1377,7 +1402,7 @@ async function startDraw() {
       celebrateFinal(jackpot);
       const getMore = (keep, absent, k) => { absent.forEach(a => S.skip.add(a.id)); const ex = new Set(keep.map(p => p.id)); return Engine.pickMany(eligible(S.skip).filter(p => !ex.has(p.id)), k); };
       const res = await groupCard(persons, prize, effRate, getMore);
-      if (res.a === 'confirm') { const c = commit(prize, res.persons, effRate); toast(`Saved ${c} winner(s) for “${prize.name}”.`, 'success'); caption('✔ ' + c + ' winners confirmed'); }
+      if (res.a === 'confirm') { const c = commit(prize, res.persons, effRate, audit); toast(`Saved ${c} winner(s) for “${prize.name}”.`, 'success'); caption('✔ ' + c + ' winners confirmed'); }
       else caption('Draw discarded');
     } else {
       let person = elig0[Engine.randInt(elig0.length)];
@@ -1386,7 +1411,7 @@ async function startDraw() {
       celebrateFinal(jackpot);
       for (;;) {
         const res = await winnerCard(person, prize, effRate, prize.qty - 1, true);
-        if (res === 'confirm') { commit(prize, [person], effRate); toast(`${person.name} won “${prize.name}”.`, 'success'); caption('✔ ' + person.name); break; }
+        if (res === 'confirm') { commit(prize, [person], effRate, audit); toast(`${person.name} won “${prize.name}”.`, 'success'); caption('✔ ' + person.name); break; }
         if (res === 'discard') { caption('Draw discarded'); break; }
         // redraw: same prize, new person (absent person excluded for this redraw only)
         S.skip.add(person.id);
@@ -1477,6 +1502,22 @@ function showSnaps() {
     if (await ask('Restore snapshot', `Go back to ${fmtDate(e.ts)}?\n${summary(c)}`, 'Restore')) { m.close(); adoptState(c, 'restore snapshot'); toast('Snapshot restored.', 'success'); }
   });
 }
+
+// ---- keep the screen awake (projector / laptop must not dim during the event) ----
+let wakeLock = null;
+function wakeMsg(t) { const el = $('#wakeState'); if (el) el.textContent = t; }
+async function wakeOn() {
+  if (!S.settings.wake) return wakeMsg('Screen may turn off when idle.');
+  if (!('wakeLock' in navigator)) return wakeMsg('This browser cannot keep the screen awake — change your power settings to “never sleep”.');
+  if (document.visibilityState !== 'visible' || wakeLock) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+    wakeMsg('✔ Screen will stay on while this page is open.');
+  } catch (e) { wakeLock = null; wakeMsg('Could not keep the screen awake (battery saver?). Check power settings.'); }
+}
+function wakeOff() { if (wakeLock) { wakeLock.release().catch(() => { }); wakeLock = null; } wakeMsg('Screen may turn off when idle.'); }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wakeOn(); });
 function initOffline() {
   const el = $('#offlineState');
   if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) { el.textContent = 'Offline mode: available when opened from the website (https).'; return; }
@@ -1587,6 +1628,7 @@ $('#btnBackup').onclick = () => downloadBackup(false);
 $('#btnRestore').onclick = () => $('#backupInput').click();
 $('#backupInput').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f && !busy) restoreFile(f); };
 $('#btnSnaps').onclick = showSnaps;
+$('#chkWake').onchange = e => { S.settings.wake = e.target.checked; save(); e.target.checked ? wakeOn() : wakeOff(); };
 $('#chkAutoBackup').onchange = e => { S.settings.autoBackup = e.target.checked; save(); if (e.target.checked) toast('A .json backup will download after each confirmed draw (allow multiple downloads if your browser asks).', 'info', 7000); };
 window.addEventListener('beforeunload', e => { if (busy) { e.preventDefault(); e.returnValue = ''; } });
 window.addEventListener('error', ev => console.warn('Unhandled error:', ev.message));
@@ -1596,7 +1638,8 @@ window.addEventListener('error', ev => console.warn('Unhandled error:', ev.messa
    ===================================================================== */
 const hadData = load();
 refreshAll();
-initOffline();
+initOffline(); wakeOn();
+document.addEventListener('pointerdown', () => { if (!wakeLock) wakeOn(); });
 if (!hadData) toast('Welcome! Demo prizes & 120 participants are loaded. Import your own in “Data & Tools”.', 'info', 7000);
 if (document.fonts && document.fonts.load) {
   Promise.all(['600 30px Kanit', '700 30px Cinzel'].map(f => document.fonts.load(f, 'Aก'))).catch(() => { }).then(() => document.fonts.ready).then(() => Wheel.draw());
