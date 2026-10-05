@@ -587,6 +587,7 @@ const Engine = (() => {
    ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const isJackpot = p => !!p && p.jackpot === true;   // set per prize in Add/Edit Prize
 const IMG_RE = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
 const safeImg = v => (typeof v === 'string' && v.length < 600000 && IMG_RE.test(v)) ? v : '';
 // Read a picked file, shrink it (max 480px) so it stays small in browser storage, return a data URL.
@@ -679,7 +680,7 @@ function sanitizeLoaded(d) {
     const qty = Number.isInteger(p.qty) && p.qty >= 0 ? p.qty : 0;
     const rate = Number(p.rate); if (!isFinite(rate) || rate < 0 || rate > 100) return;
     let id = Number(p.id); if (!Number.isInteger(id) || ids.has(id)) id = 0;
-    out.prizes.push({ id, name: p.name.trim(), qty, total: Math.max(qty, Number.isInteger(p.total) ? p.total : qty), rate, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#8B0000', img: safeImg(p.img) });
+    out.prizes.push({ id, name: p.name.trim(), qty, total: Math.max(qty, Number.isInteger(p.total) ? p.total : qty), rate, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#8B0000', img: safeImg(p.img), jackpot: typeof p.jackpot === 'boolean' ? p.jackpot : (rate > 0 && rate < 1) });
     ids.add(id);
   });
   let mx = out.prizes.reduce((m, p) => Math.max(m, p.id), 0);
@@ -706,7 +707,7 @@ function sanitizeLoaded(d) {
 }
 // Deterministic demo data
 function demoPrizes() {
-  const mk = (name, qty, rate, color) => ({ id: 0, name, qty, total: qty, rate, color });
+  const mk = (name, qty, rate, color) => ({ id: 0, name, qty, total: qty, rate, color, jackpot: rate < 1 });
   return [
     mk('Toyota Yaris (รถยนต์ใหม่)', 1, 0.01, '#8B0000'), mk('iPhone 17 Pro', 3, 0.5, '#141414'), mk('Gold Bar 1 Baht (ทองคำแท่ง)', 5, 1.5, '#0B5D3B'),
     mk('Cash 5,000 THB (เงินสด)', 10, 3, '#a31515'), mk('Smart TV 55" (สมาร์ททีวี)', 10, 5, '#222222'), mk('Gift Voucher 1,000 THB', 40, 10, '#0e7a4d'),
@@ -1243,7 +1244,7 @@ function showImportPreview(kind, res) {
       if (isP) {
         if (!append) S.prizes = [];
         const have = new Set(S.prizes.map(p => p.name.toLowerCase()));
-        v.forEach(r => { if (have.has(r.name.toLowerCase())) { dup++; return; } have.add(r.name.toLowerCase()); S.prizes.push({ id: S.nextPid++, name: r.name, qty: r.qty, total: r.qty, rate: r.rate, color: PALETTE[S.prizes.length % PALETTE.length] }); added++; });
+        v.forEach(r => { if (have.has(r.name.toLowerCase())) { dup++; return; } have.add(r.name.toLowerCase()); S.prizes.push({ id: S.nextPid++, name: r.name, qty: r.qty, total: r.qty, rate: r.rate, color: PALETTE[S.prizes.length % PALETTE.length], jackpot: r.rate > 0 && r.rate < 1 }); added++; });
         S.settings.prizeChoice = 'random';
       } else {
         if (!append) S.participants = [];
@@ -1271,7 +1272,7 @@ function renderStats() {
 function renderPrizes() {
   const live = Engine.liveRates(S.prizes);
   $('#prizeBody').innerHTML = S.prizes.length ? S.prizes.map((p, i) => `<tr class="${p.qty <= 0 ? 'dim' : ''}">
-    <td><span class="sw" style="background:${esc(p.color)}"></span></td><td>${safeImg(p.img) ? `<img class="pthumb" src="${p.img}" alt="">` : ''}${esc(p.name)}${p.qty <= 0 ? ' <span class="badge out">Out of stock</span>' : (p.rate > 0 && p.rate < 1 ? ' <span class="badge">JACKPOT</span>' : '')}${p.rate <= 0 && p.qty > 0 ? ' <span class="badge out">0% rate</span>' : ''}</td>
+    <td><span class="sw" style="background:${esc(p.color)}"></span></td><td>${safeImg(p.img) ? `<img class="pthumb" src="${p.img}" alt="">` : ''}${esc(p.name)}${p.qty <= 0 ? ' <span class="badge out">Out of stock</span>' : (isJackpot(p) ? ' <span class="badge">JACKPOT</span>' : '')}${p.rate <= 0 && p.qty > 0 ? ' <span class="badge out">0% rate</span>' : ''}</td>
     <td class="num">${p.qty} / ${p.total}</td><td class="num">${fmtRate(p.rate)}%</td><td class="num">${p.qty > 0 && live[i] > 0 ? '<b style="color:var(--gold-hi)">' + fmtRate(live[i]) + '%</b>' : '—'}</td>
     <td style="white-space:nowrap;text-align:right"><button class="btn sm" data-edit="${p.id}">Edit</button> <button class="btn sm red" data-del="${p.id}">✕</button></td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No prizes yet. Add one or import an Excel file.</td></tr>';
@@ -1329,6 +1330,7 @@ function prizeForm(p) {
     <div><label>Prize name</label><input id="fpName" maxlength="80" value="${esc(d.name)}" placeholder="e.g. iPhone 17 Pro / รถยนต์"></div>
     <div class="row" style="flex-wrap:nowrap"><div style="flex:1"><label>Quantity left</label><input id="fpQty" type="number" min="0" step="1" value="${d.qty}"></div>
     <div style="flex:1"><label>Rate (%)</label><input id="fpRate" type="number" min="0" max="100" step="0.01" value="${d.rate}"></div></div>
+    <div><label class="chk" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--txt)"><input type="checkbox" id="fpJp"${isJackpot(d) ? ' checked' : ''}> 🎰 JACKPOT prize — plays the big JACKPOT! show, gold glow and extra confetti when won</label></div>
     <div><label>Wheel colour</label><input id="fpColor" type="color" value="${esc(d.color)}"></div>
     <div><label>Prize picture (optional)</label><div class="pimg-row"><div class="pimg-prev" id="fpPrev"></div>
       <div style="display:grid;gap:6px"><input id="fpFile" type="file" accept="image/*"><button type="button" class="btn sm red" id="fpImgDel">Remove picture</button></div></div></div>
@@ -1339,9 +1341,9 @@ function prizeForm(p) {
       if ($('#fpQty').value === '' || !Number.isInteger(qty) || qty < 0 || qty > 1e6) return err.textContent = 'Quantity must be a whole number (0 or more).', false;
       if ($('#fpRate').value === '' || !isFinite(rate) || rate < 0 || rate > 100) return err.textContent = 'Rate must be between 0 and 100.', false;
       if (S.prizes.some(x => x !== p && x.name.toLowerCase() === name.toLowerCase())) return err.textContent = 'A prize with this name already exists.', false;
-      const r4 = Math.round(rate * RATE_SCALE) / RATE_SCALE, color = $('#fpColor').value;
-      if (isNew) S.prizes.push({ id: S.nextPid++, name, qty, total: qty, rate: r4, color, img });
-      else Object.assign(p, { name, qty, total: Math.max(p.total, qty), rate: r4, color, img });
+      const r4 = Math.round(rate * RATE_SCALE) / RATE_SCALE, color = $('#fpColor').value, jackpot = $('#fpJp').checked;
+      if (isNew) S.prizes.push({ id: S.nextPid++, name, qty, total: qty, rate: r4, color, img, jackpot });
+      else Object.assign(p, { name, qty, total: Math.max(p.total, qty), rate: r4, color, img, jackpot });
       save(); refreshAll();
     } }], onOpen: m => {
       const prev = $('#fpPrev', m.el), showPrev = () => { prev.innerHTML = img ? `<img src="${img}" alt="">` : 'No picture'; $('#fpImgDel', m.el).hidden = !img; };
@@ -1405,7 +1407,7 @@ async function prizeShowcase(prize) {
 async function prizeReveal(prize, slice) {
   Wheel.highlight(slice); Wheel.shake();
   caption('🎡 ' + prize.name);
-  const jackpot = prize.rate > 0 && prize.rate < 1;
+  const jackpot = isJackpot(prize);
   const [x, y] = centerOf($('#wheelBox'));
   if (jackpot) {
     Bulbs.set('jackpot'); Sfx.bell(); Sfx.coin(18);
@@ -1439,7 +1441,7 @@ function winnerInner(person, prize, effRate, remainingAfter, actions) {
 }
 function winnerCard(person, prize, effRate, remainingAfter, canRedraw, auto) {
   return new Promise(resolve => {
-    const jp = prize.rate > 0 && prize.rate < 1;
+    const jp = isJackpot(prize);
     const ov = document.createElement('div'); ov.className = 'ov';
     ov.innerHTML = `<div class="invite${jp ? ' jp' : ''}" role="dialog" aria-modal="true">${winnerInner(person, prize, effRate, remainingAfter,
       `${auto ? `<div class="autobar"><i style="animation-duration:${auto.ms}ms"></i></div>` : ''}<div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm${auto ? ' &amp; Next' : ' Winner'}</button>${canRedraw ? '<button class="btn" data-a="redraw">↻ Redraw (not present)</button>' : ''}${auto ? '<button class="btn sm" data-stop>■ Stop after this</button>' : ''}<button class="btn sm" data-a="discard">Discard</button></div>
@@ -1536,7 +1538,7 @@ async function drawOnce(outer, opts) {
     const liveNow = Engine.liveRates(S.prizes), effRate = liveNow[pi];   // real chance this prize had on this spin
     const audit = { mode: st.mode, eligible: elig0.length,
       odds: S.prizes.map((q, i) => liveNow[i] > 0 ? `${q.name}: ${fmtRate(liveNow[i])}% (${q.qty} left)` : null).filter(Boolean).join(' | ').slice(0, 2500) };
-    const jackpot = prize.rate > 0 && prize.rate < 1;
+    const jackpot = isJackpot(prize);
     S.skip.clear();
     if (group) {
       const cnt = Math.min(n, prize.qty, elig0.length);
