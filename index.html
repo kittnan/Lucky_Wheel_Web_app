@@ -447,7 +447,7 @@ kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(2
       </div>
 
       <div class="card odds" id="odds">
-        <div class="odds-h"><span>PRIZE ODDS · LIVE</span><span class="row" style="gap:6px"><span class="secure">🔒 crypto.getRandomValues</span><button class="btn sm" id="btnOddsTest" title="Simulate 100,000 spins with the real random function">🧪 Verify</button></span></div>
+        <div class="odds-h"><span>PRIZE ODDS · LIVE</span><span class="row" style="gap:6px"><span class="secure">🔒 crypto.getRandomValues</span><button class="btn sm" id="btnOddsTest" title="Simulate 100,000 spins with the real random function">🧪 Verify</button><button class="btn sm" id="btnPeopleTest" title="Simulate picking people with the real random function and check everyone is picked equally often">👥 Verify people</button></span></div>
         <div id="oddsList"></div>
         <div class="odds-f">Chance per spin, right now. When a prize runs out the others are rescaled in the same proportion. Every spin is independent — no pity, no hidden adjustments.</div>
       </div>
@@ -1404,6 +1404,32 @@ function prizeForm(p) {
 /* =====================================================================
    11. RATE SIMULATION
    ===================================================================== */
+// Fairness test for WHO gets picked: same selection code as the real draw, nobody is removed between draws.
+function runPeopleSimulation() {
+  const pool = eligible(), n = pool.length;
+  if (n < 2) return toast('Need at least 2 eligible participants to run this test.', 'warn');
+  const N = Math.min(2000000, Math.max(100000, n * 500)), t0 = performance.now();
+  const one = new Uint32Array(n), grp = new Uint32Array(n), k = Math.min(n, Math.max(2, Math.floor(Number(S.settings.groupSize)) || 10));
+  const ix = new Map(pool.map((p, i) => [p, i]));
+  for (let i = 0; i < N; i++) one[Engine.randInt(n)]++;                        // single-winner draw: pool[randInt(n)]
+  const rounds = Math.max(1, Math.round(N / k));
+  for (let r = 0; r < rounds; r++) for (const p of Engine.pickMany(pool, k)) grp[ix.get(p)]++;   // group draw: k distinct people
+  const ms = Math.round(performance.now() - t0);
+  const stat = (c, total, per) => {                                             // per = chance each person is picked in one trial
+    const exp = total * per, sd = Math.sqrt(total * per * (1 - per));
+    let chi = 0, mn = Infinity, mx = 0, worst = 0, wi = 0;
+    for (let i = 0; i < n; i++) { chi += (c[i] - exp) ** 2 / exp; mn = Math.min(mn, c[i]); mx = Math.max(mx, c[i]); const z = Math.abs((c[i] - exp) / sd); if (z > worst) { worst = z; wi = i; } }
+    const df = n - 1, zc = (chi - df) / Math.sqrt(2 * df), zmax = Math.sqrt(2 * Math.log(n)) + 2.5;   // allow the natural extreme of n people
+    return { exp, mn, mx, worst, wi, zc, ok: Math.abs(zc) <= 4 && worst <= zmax };
+  };
+  const a = stat(one, N, 1 / n), b = stat(grp, rounds, k / n), allOk = a.ok && b.ok;
+  const row = (title, st, total) => `<tr><td>${title}</td><td class="num">${total.toLocaleString()}</td><td class="num">${st.exp.toFixed(1)}</td><td class="num">${st.mn} – ${st.mx}</td><td class="num">${st.zc.toFixed(2)}</td><td class="num">${st.worst.toFixed(2)} <span style="color:var(--muted)">(${esc(pool[st.wi].name)})</span></td><td>${st.ok ? '✔' : '✖'}</td></tr>`;
+  openModal({ title: `Fairness Test — ${n.toLocaleString()} eligible people`, html: `
+    <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Uses the exact same selection code as real draws (crypto.getRandomValues). Nobody is removed between simulated draws, and no winners or stock are changed. Done in ${ms} ms. Each person should be picked about the same number of times; list order does not matter. A test passes when the overall spread (chi-square z) is within ±4 and no single person is more extreme than expected for ${n.toLocaleString()} people.</p>
+    <div class="banner ${allOk ? 'ok' : 'err'}">${allOk ? '✔ Everyone is picked about equally often.' : '✖ Outside the expected range (rare by chance — run again).'}</div>
+    <div class="tbl-wrap"><table><thead><tr><th>Draw type</th><th class="num">Draws</th><th class="num">Expected per person</th><th class="num">Min – Max picked</th><th class="num">Spread z</th><th class="num">Most extreme |z|</th><th></th></tr></thead><tbody>${row('Single winner', a, N)}${row(`Group of ${k}`, b, rounds)}</tbody></table></div>`,
+    buttons: [{ label: 'Close' }, { label: '↻ Run Again', cls: 'gold', action: () => { setTimeout(runPeopleSimulation, 0); } }] });
+}
 function runSimulation() {
   const idxs = S.prizes.map((p, i) => Engine.isAvailable(p) ? i : -1).filter(i => i >= 0);
   if (!S.prizes.length) return toast('Add some prizes first.', 'warn');
@@ -1833,6 +1859,7 @@ $('#btnTplPeople').onclick = templatePeople;
 $('#btnExport').onclick = exportResults;
 $('#btnSim').onclick = runSimulation;
 $('#btnOddsTest').onclick = () => { if (!busy) runSimulation(); };
+$('#btnPeopleTest').onclick = () => { if (!busy) runPeopleSimulation(); };
 $('#p-prizes').addEventListener('click', async e => {
   const ed = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
   if (e.target.closest('#btnBalance')) {
