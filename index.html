@@ -310,6 +310,54 @@ body.practice #frame{border-image:linear-gradient(135deg,#d42a2a,#6b0a0a 50%,#d4
 .kbd-hint{margin-top:10px;font-size:11.5px;color:var(--muted)}
 kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(212,175,55,.5);border-radius:5px;background:rgba(0,0,0,.5)}
 @media (prefers-reduced-motion:reduce){.spot,.mote{animation:none}}
+
+/* prize pictures */
+.pthumb{width:34px;height:34px;border-radius:8px;object-fit:cover;vertical-align:middle;margin-right:8px;border:1px solid var(--gold);background:#000}
+.pimg-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pimg-prev{width:84px;height:84px;border-radius:12px;border:1px dashed var(--gold);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;overflow:hidden;background:#000}
+.pimg-prev img{width:100%;height:100%;object-fit:cover}
+#prizeShow{position:fixed;inset:0;z-index:1040;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;overflow:hidden;
+  background:radial-gradient(circle at 50% 45%,rgba(60,35,0,.55),rgba(0,0,0,.88) 70%)}
+#prizeShow.show{display:flex;animation:psIn .35s ease-out both}
+@keyframes psIn{from{opacity:0}to{opacity:1}}
+.pz-rays{position:absolute;left:50%;top:45%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;opacity:.55;
+  background:repeating-conic-gradient(from 0deg,rgba(255,215,90,.55) 0 6deg,transparent 6deg 18deg);
+  -webkit-mask:radial-gradient(circle,#000 0,transparent 38%);mask:radial-gradient(circle,#000 0,transparent 38%);animation:psSpin 14s linear infinite}
+.pz-rays.r2{animation-duration:22s;animation-direction:reverse;opacity:.35;background:repeating-conic-gradient(from 9deg,rgba(255,120,80,.5) 0 4deg,transparent 4deg 14deg)}
+@keyframes psSpin{to{transform:rotate(360deg)}}
+.pz-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:0 16px}
+.pz-glow{position:absolute;left:50%;top:44%;width:min(70vmin,560px);height:min(70vmin,560px);transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,225,120,.75),rgba(255,180,40,.25) 45%,transparent 70%);animation:psPulse 1.2s ease-in-out infinite alternate}
+@keyframes psPulse{from{transform:translate(-50%,-50%) scale(.85);opacity:.7}to{transform:translate(-50%,-50%) scale(1.12);opacity:1}}
+.pz-frame{position:relative;width:min(52vmin,420px);height:min(52vmin,420px);border-radius:24px;padding:8px;background:var(--gold-grad);
+  box-shadow:0 0 0 3px #000,0 0 50px rgba(255,200,40,.95),0 0 120px rgba(255,160,0,.6);overflow:hidden;
+  animation:psPop 1.15s cubic-bezier(.2,1.5,.35,1) both,psFloat 2.6s ease-in-out 1.15s infinite}
+.pz-frame img,.inv-img img,#jpImg img{display:block;width:100%;height:100%;object-fit:cover;border-radius:17px;background:#000}
+.pz-frame::after,.inv-img::after,#jpImg::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.85) 50%,transparent 65%);
+  transform:translateX(-120%);animation:psShine 2s ease-in-out .9s infinite;pointer-events:none}
+@keyframes psShine{0%{transform:translateX(-120%)}55%,100%{transform:translateX(120%)}}
+@keyframes psPop{0%{transform:scale(.05) rotate(-540deg);opacity:0;filter:blur(14px)}55%{transform:scale(1.22) rotate(12deg);opacity:1;filter:blur(0)}78%{transform:scale(.94) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes psFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-14px) scale(1.035)}}
+.pz-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:psFlash .7s ease-out .35s both}
+@keyframes psFlash{0%{opacity:.95}100%{opacity:0}}
+.pz-title{font-family:var(--head);font-weight:900;letter-spacing:.3em;font-size:clamp(16px,3.2vw,30px);color:#fff;text-shadow:0 0 18px #ffc83a;animation:psRise .7s ease-out .7s both}
+.pz-name{font-family:var(--head);font-weight:900;letter-spacing:.06em;font-size:clamp(30px,7vw,84px);line-height:1.08;max-width:92vw;overflow-wrap:anywhere;
+  background:linear-gradient(180deg,#fffbe0 0%,#ffd84a 40%,#c98f0a 55%,#fff0a0 75%,#b07a05);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 4px 0 #5a3a00) drop-shadow(0 0 26px rgba(255,200,40,.9));animation:psName 1s cubic-bezier(.2,1.6,.4,1) .9s both,jpb .6s ease-in-out 1.9s infinite alternate}
+@keyframes psRise{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes psName{0%{transform:scale(.2) translateY(60px);opacity:0}100%{transform:none;opacity:1}}
+.pz-orbit{position:absolute;left:50%;top:44%;width:0;height:0}
+.pz-orbit i{position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle,#fff,#ffd54a 55%,transparent 70%);
+  box-shadow:0 0 14px 4px rgba(255,210,70,.9);animation:psOrbit 3.2s linear infinite;animation-delay:calc(var(--i)*-.4s)}
+@keyframes psOrbit{from{transform:rotate(0) translateX(min(40vmin,330px)) scale(1)}50%{transform:rotate(180deg) translateX(min(40vmin,330px)) scale(1.7)}to{transform:rotate(360deg) translateX(min(40vmin,330px)) scale(1)}}
+.inv-imgwrap{position:relative;display:flex;justify-content:center;margin:20px 0 20px}
+.inv-img{position:relative;width:min(30vmin,220px);height:min(30vmin,220px);border-radius:18px;padding:5px;background:var(--gold-grad);overflow:hidden;
+  box-shadow:0 0 0 2px #000,0 0 36px rgba(255,200,40,.85);animation:psPop 1s cubic-bezier(.2,1.5,.35,1) .15s both,psFloat 2.8s ease-in-out 1.2s infinite}
+.inv-img.sm{width:64px;height:64px;border-radius:10px;padding:3px;display:inline-block;vertical-align:middle;margin-right:10px;animation:psPop .8s cubic-bezier(.2,1.5,.35,1) both}
+#jpImg{position:relative;width:min(30vmin,260px);height:min(30vmin,260px);margin-top:16px;border-radius:20px;padding:6px;background:var(--gold-grad);overflow:hidden;
+  box-shadow:0 0 0 3px #000,0 0 60px rgba(255,200,40,.95);animation:psPop 1.1s cubic-bezier(.2,1.5,.35,1) .5s both,psFloat 2.4s ease-in-out 1.6s infinite}
+#jpImg[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.pz-rays,.pz-glow,.pz-orbit i,.pz-frame,.inv-img,#jpImg{animation:none}}
 </style>
 </head>
 <body>
@@ -456,7 +504,8 @@ kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(2
 
 <div id="countdown" aria-hidden="true"></div>
 <div id="practiceBar" hidden>🧪 PRACTICE MODE — results are NOT saved <button class="btn sm" id="btnPracticeExit">Exit practice</button></div>
-<div id="jackpot"><div class="jpframe"></div><div class="jpframe b"></div><h1>JACKPOT!</h1><p id="jpPrize"></p></div>
+<div id="jackpot"><div class="jpframe"></div><div class="jpframe b"></div><h1>JACKPOT!</h1><p id="jpPrize"></p><div id="jpImg" hidden></div></div>
+<div id="prizeShow" aria-hidden="true"></div>
 <div id="toasts" aria-live="polite"></div>
 
 <script>
@@ -538,6 +587,24 @@ const Engine = (() => {
    ===================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const IMG_RE = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
+const safeImg = v => (typeof v === 'string' && v.length < 600000 && IMG_RE.test(v)) ? v : '';
+// Read a picked file, shrink it (max 480px) so it stays small in browser storage, return a data URL.
+function fileToDataURL(file) {
+  return new Promise((ok, no) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 480 / Math.max(im.naturalWidth, im.naturalHeight)), w = Math.max(1, Math.round(im.naturalWidth * k)), h = Math.max(1, Math.round(im.naturalHeight * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.drawImage(im, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const png = /png|gif|webp/.test(file.type); let out = c.toDataURL(png ? 'image/png' : 'image/jpeg', .86);
+      if (out.length > 300000) out = c.toDataURL('image/jpeg', .72);
+      safeImg(out) ? ok(out) : no(new Error('bad image'));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); no(new Error('Cannot read this image')); };
+    im.src = url;
+  });
+}
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const mod = (a, n) => ((a % n) + n) % n;
 const fmtRate = x => String(+Number(x).toFixed(4));
@@ -612,7 +679,7 @@ function sanitizeLoaded(d) {
     const qty = Number.isInteger(p.qty) && p.qty >= 0 ? p.qty : 0;
     const rate = Number(p.rate); if (!isFinite(rate) || rate < 0 || rate > 100) return;
     let id = Number(p.id); if (!Number.isInteger(id) || ids.has(id)) id = 0;
-    out.prizes.push({ id, name: p.name.trim(), qty, total: Math.max(qty, Number.isInteger(p.total) ? p.total : qty), rate, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#8B0000' });
+    out.prizes.push({ id, name: p.name.trim(), qty, total: Math.max(qty, Number.isInteger(p.total) ? p.total : qty), rate, color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : '#8B0000', img: safeImg(p.img) });
     ids.add(id);
   });
   let mx = out.prizes.reduce((m, p) => Math.max(m, p.id), 0);
@@ -993,10 +1060,16 @@ const Slot = (() => {
     return new Promise(resolve => {
       const H = reels[0].strip.children[0].offsetHeight || 64;
       const dur = [2400, 3300, 4200].map(T);
-      const pick = () => pool.length ? pool[Engine.randInt(pool.length)] : null;
+      // pick a random participant that is not the winner and not any of the `avoid` rows (when the pool is big enough)
+      const isWin = p => p && String(p.id) === String(finals[0]);
+      const pickNot = (...avoid) => {
+        if (!pool.length) return null;
+        for (let n = 0; n < 30; n++) { const p = pool[Engine.randInt(pool.length)]; if (!isWin(p) && !avoid.includes(p)) return p; }
+        return pool.find(p => !isWin(p) && !avoid.includes(p)) || pool.find(p => !isWin(p)) || null;
+      };
       const travel = k => Math.max(5, Math.round(33 * dur[k] / 3000));      // rows each reel travels: same scroll speed on every reel
-      const seq = Array.from({ length: Math.max(...dur.map((_, k) => travel(k))) }, pick);   // shared row sequence → rows line up across reels
-      const rowA = pick(), rowB = pick();                                    // neighbours of the winning row
+      const seq = []; for (let i = 0, n = Math.max(...dur.map((_, k) => travel(k))); i < n; i++) seq.push(pickNot(seq[i - 1]));   // shared row sequence, no repeats back to back
+      const rowA = pickNot(...dur.map((_, k) => seq[travel(k) - 4])), rowB = pickNot(rowA);       // neighbours of the winning row: never the winner itself
       let done = 0;
       reels.forEach((r, k) => {
         const txt = p => p ? r.def.val(p) : '—';
@@ -1198,7 +1271,7 @@ function renderStats() {
 function renderPrizes() {
   const live = Engine.liveRates(S.prizes);
   $('#prizeBody').innerHTML = S.prizes.length ? S.prizes.map((p, i) => `<tr class="${p.qty <= 0 ? 'dim' : ''}">
-    <td><span class="sw" style="background:${esc(p.color)}"></span></td><td>${esc(p.name)}${p.qty <= 0 ? ' <span class="badge out">Out of stock</span>' : (p.rate > 0 && p.rate < 1 ? ' <span class="badge">JACKPOT</span>' : '')}${p.rate <= 0 && p.qty > 0 ? ' <span class="badge out">0% rate</span>' : ''}</td>
+    <td><span class="sw" style="background:${esc(p.color)}"></span></td><td>${safeImg(p.img) ? `<img class="pthumb" src="${p.img}" alt="">` : ''}${esc(p.name)}${p.qty <= 0 ? ' <span class="badge out">Out of stock</span>' : (p.rate > 0 && p.rate < 1 ? ' <span class="badge">JACKPOT</span>' : '')}${p.rate <= 0 && p.qty > 0 ? ' <span class="badge out">0% rate</span>' : ''}</td>
     <td class="num">${p.qty} / ${p.total}</td><td class="num">${fmtRate(p.rate)}%</td><td class="num">${p.qty > 0 && live[i] > 0 ? '<b style="color:var(--gold-hi)">' + fmtRate(live[i]) + '%</b>' : '—'}</td>
     <td style="white-space:nowrap;text-align:right"><button class="btn sm" data-edit="${p.id}">Edit</button> <button class="btn sm red" data-del="${p.id}">✕</button></td></tr>`).join('')
     : '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">No prizes yet. Add one or import an Excel file.</td></tr>';
@@ -1251,11 +1324,14 @@ function refreshAll() { renderPrizes(); renderDeptFilter(); renderPeople(); rend
 function prizeForm(p) {
   const isNew = !p;
   const d = p || { name: '', qty: 1, rate: 1, color: PALETTE[S.prizes.length % PALETTE.length] };
+  let img = safeImg(d.img);
   openModal({ title: isNew ? 'Add Prize' : 'Edit Prize', narrow: true, html: `<div class="form-grid">
     <div><label>Prize name</label><input id="fpName" maxlength="80" value="${esc(d.name)}" placeholder="e.g. iPhone 17 Pro / รถยนต์"></div>
     <div class="row" style="flex-wrap:nowrap"><div style="flex:1"><label>Quantity left</label><input id="fpQty" type="number" min="0" step="1" value="${d.qty}"></div>
     <div style="flex:1"><label>Rate (%)</label><input id="fpRate" type="number" min="0" max="100" step="0.01" value="${d.rate}"></div></div>
     <div><label>Wheel colour</label><input id="fpColor" type="color" value="${esc(d.color)}"></div>
+    <div><label>Prize picture (optional)</label><div class="pimg-row"><div class="pimg-prev" id="fpPrev"></div>
+      <div style="display:grid;gap:6px"><input id="fpFile" type="file" accept="image/*"><button type="button" class="btn sm red" id="fpImgDel">Remove picture</button></div></div></div>
     <div class="err-txt" id="fpErr"></div></div>`,
     buttons: [{ label: 'Cancel' }, { label: 'Save', cls: 'gold', action: () => {
       const name = $('#fpName').value.trim(), qty = Number($('#fpQty').value), rate = Number($('#fpRate').value), err = $('#fpErr');
@@ -1264,10 +1340,20 @@ function prizeForm(p) {
       if ($('#fpRate').value === '' || !isFinite(rate) || rate < 0 || rate > 100) return err.textContent = 'Rate must be between 0 and 100.', false;
       if (S.prizes.some(x => x !== p && x.name.toLowerCase() === name.toLowerCase())) return err.textContent = 'A prize with this name already exists.', false;
       const r4 = Math.round(rate * RATE_SCALE) / RATE_SCALE, color = $('#fpColor').value;
-      if (isNew) S.prizes.push({ id: S.nextPid++, name, qty, total: qty, rate: r4, color });
-      else Object.assign(p, { name, qty, total: Math.max(p.total, qty), rate: r4, color });
+      if (isNew) S.prizes.push({ id: S.nextPid++, name, qty, total: qty, rate: r4, color, img });
+      else Object.assign(p, { name, qty, total: Math.max(p.total, qty), rate: r4, color, img });
       save(); refreshAll();
-    } }], onOpen: m => setTimeout(() => $('#fpName', m.el).focus(), 50) });
+    } }], onOpen: m => {
+      const prev = $('#fpPrev', m.el), showPrev = () => { prev.innerHTML = img ? `<img src="${img}" alt="">` : 'No picture'; $('#fpImgDel', m.el).hidden = !img; };
+      showPrev();
+      $('#fpFile', m.el).onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try { img = await fileToDataURL(f); $('#fpErr', m.el).textContent = ''; showPrev(); }
+        catch (x) { $('#fpErr', m.el).textContent = 'Could not use this picture — try a JPG or PNG.'; }
+      };
+      $('#fpImgDel', m.el).onclick = () => { img = ''; $('#fpFile', m.el).value = ''; showPrev(); };
+      setTimeout(() => $('#fpName', m.el).focus(), 50);
+    } });
 }
 
 /* =====================================================================
@@ -1304,6 +1390,18 @@ async function wheelPhase(pi, short) {
   const r = await Wheel.spinTo(pi, short);
   await prizeReveal(S.prizes[pi], r.slice);
 }
+// Full-screen "you got this!" showcase for a prize that has a picture.
+async function prizeShowcase(prize) {
+  const el = $('#prizeShow'), cx = innerWidth / 2, cy = innerHeight * .44;
+  el.innerHTML = `<div class="pz-rays"></div><div class="pz-rays r2"></div><div class="pz-glow"></div>
+    <div class="pz-orbit">${Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+    <div class="pz-stage"><div class="pz-frame"><img src="${prize.img}" alt=""></div><div class="pz-title">✦ YOU WON ✦</div><div class="pz-name">${esc(prize.name)}</div></div><div class="pz-flash"></div>`;
+  el.classList.add('show'); Sfx.fanfare(); Sfx.coin(14);
+  await sleep(T(350)); FX.burst(cx, cy, 110); FX.fountain(T(1800));
+  await sleep(T(1000)); FX.sparkles(cx, cy, 60);
+  await sleep(T(1500));
+  el.classList.remove('show'); el.innerHTML = '';
+}
 async function prizeReveal(prize, slice) {
   Wheel.highlight(slice); Wheel.shake();
   caption('🎡 ' + prize.name);
@@ -1311,12 +1409,15 @@ async function prizeReveal(prize, slice) {
   const [x, y] = centerOf($('#wheelBox'));
   if (jackpot) {
     Bulbs.set('jackpot'); Sfx.bell(); Sfx.coin(18);
-    $('#jpPrize').textContent = prize.name; $('#jackpot').classList.add('show');
+    $('#jpPrize').textContent = prize.name;
+    const jpi = $('#jpImg'); jpi.hidden = !safeImg(prize.img); jpi.innerHTML = safeImg(prize.img) ? `<img src="${prize.img}" alt="">` : '';
+    $('#jackpot').classList.add('show');
     FX.fountain(T(3300)); FX.burst(x, y, 120);
     await sleep(T(3600)); $('#jackpot').classList.remove('show');
   } else {
     Bulbs.set('win'); Sfx.coin(10); FX.sparkles(x, y, 50);
-    await sleep(T(1100));
+    if (safeImg(prize.img)) await prizeShowcase(prize);
+    else await sleep(T(1100));
   }
   Wheel.endSuspense(); Bulbs.set(jackpot ? 'win' : 'idle');
 }
@@ -1333,7 +1434,7 @@ function celebrateFinal(jackpot) {
 function winnerInner(person, prize, effRate, remainingAfter, actions) {
   return `<div class="inv-top">🎰 WINNER!</div><div class="inv-sub">Congratulations, you won…</div>
       <div class="inv-name">${esc(person.name)}</div><div class="inv-meta">${esc(person.id)}${person.dept ? ' · ' + esc(person.dept) : ''}</div>
-      <div class="inv-won">— YOU WON —</div><div class="inv-prize">${esc(prize.name)}</div>
+      <div class="inv-won">— YOU WON —</div>${safeImg(prize.img) ? `<div class="inv-imgwrap"><div class="inv-img"><img src="${prize.img}" alt=""></div></div>` : ''}<div class="inv-prize">${esc(prize.name)}</div>
       <span class="inv-rate">Drop rate ${fmtRate(effRate)}% · ${remainingAfter} left after this</span>${actions}`;
 }
 function winnerCard(person, prize, effRate, remainingAfter, canRedraw, auto) {
@@ -1358,7 +1459,7 @@ function groupCard(persons, prize, effRate, getMore) {
   return new Promise(resolve => {
     const ov = document.createElement('div'); ov.className = 'ov';
     ov.innerHTML = `<div class="invite wide" role="dialog" aria-modal="true"><div class="inv-top">🎰 WINNERS!</div>
-      <div class="inv-sub">Congratulations! Each of these players wins:</div><div class="inv-prize" style="margin-bottom:10px">${esc(prize.name)}</div>
+      <div class="inv-sub">Congratulations! Each of these players wins:</div><div class="inv-prize" style="margin-bottom:10px">${safeImg(prize.img) ? `<span class="inv-img sm"><img src="${prize.img}" alt=""></span>` : ''}${esc(prize.name)}</div>
       <div class="tbl-wrap" style="text-align:left;max-height:46vh"><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Department</th><th>Present</th></tr></thead><tbody id="gBody"></tbody></table></div>
       <div class="inv-rate" style="margin-top:12px">Drop rate ${fmtRate(effRate)}% · uncheck anyone who is absent, then “Redraw Absent”</div>
       <div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winners</button><button class="btn" data-a="redraw">↻ Redraw Absent</button><button class="btn sm" data-a="discard">Discard</button></div><div class="kbd-hint"><kbd>Enter</kbd> confirm · <kbd>R</kbd> redraw absent</div></div>`;
