@@ -492,7 +492,7 @@ kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(2
     <div class="card panel lock" id="p-people">
       <h3>Participants</h3>
       <div class="addrow"><input id="npId" placeholder="Employee ID" maxlength="40"><input id="npName" placeholder="Full name (Thai / English)" maxlength="120"><input id="npDept" placeholder="Department" maxlength="80"><button class="btn gold" id="btnAddPerson">＋ Add</button></div>
-      <div class="filters"><input id="pSearch" type="search" placeholder="🔍 Search name, ID or department"><select id="pDept"><option value="">All departments</option></select><span class="hint" id="pCount" style="align-self:center"></span></div>
+      <div class="filters"><input id="pSearch" type="search" placeholder="🔍 Search name, ID or department"><select id="pDept"><option value="">All departments</option></select><span class="hint" id="pCount" style="align-self:center"></span><button class="btn sm" id="btnShufflePeople" title="Shuffle the order of the participant list (crypto.getRandomValues). Order never changes anyone's chance.">🔀 Shuffle order</button></div>
       <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Full Name</th><th>Department</th><th>Status</th><th></th></tr></thead><tbody id="peopleBody"></tbody></table></div>
     </div>
     <div class="card panel lock" id="p-winners">
@@ -1874,6 +1874,14 @@ $('#p-prizes').addEventListener('click', async e => {
 });
 let tmr; $('#pSearch').oninput = () => { clearTimeout(tmr); tmr = setTimeout(renderPeople, 120); };
 $('#pDept').onchange = renderPeople;
+$('#btnShufflePeople').onclick = () => {
+  if (busy) return;
+  if (S.participants.length < 2) return toast('Need at least 2 participants to shuffle.', 'warn');
+  S.participants = Engine.pickMany(S.participants, S.participants.length);   // full Fisher-Yates with the same CSPRNG as the draw
+  save(); refreshAll(); Sfx.coin(6);
+  $$('#peopleBody tr').slice(0, 40).forEach((tr, i) => { tr.style.animation = `pop .35s ${(i * 0.02).toFixed(2)}s both`; });
+  toast(`🔀 Shuffled ${S.participants.length} participants. (Order does not change anyone's chance — every eligible person always has an equal chance.)`, 'success');
+};
 $('#btnAddPerson').onclick = () => {
   const id = $('#npId').value.trim(), name = $('#npName').value.trim(), dept = $('#npDept').value.trim();
   if (!id || !name) return toast('Employee ID and Full Name are required.', 'warn');
