@@ -993,10 +993,16 @@ const Slot = (() => {
     return new Promise(resolve => {
       const H = reels[0].strip.children[0].offsetHeight || 64;
       const dur = [2400, 3300, 4200].map(T);
-      const pick = () => pool.length ? pool[Engine.randInt(pool.length)] : null;
+      // pick a random participant that is not the winner and not any of the `avoid` rows (when the pool is big enough)
+      const isWin = p => p && String(p.id) === String(finals[0]);
+      const pickNot = (...avoid) => {
+        if (!pool.length) return null;
+        for (let n = 0; n < 30; n++) { const p = pool[Engine.randInt(pool.length)]; if (!isWin(p) && !avoid.includes(p)) return p; }
+        return pool.find(p => !isWin(p) && !avoid.includes(p)) || pool.find(p => !isWin(p)) || null;
+      };
       const travel = k => Math.max(5, Math.round(33 * dur[k] / 3000));      // rows each reel travels: same scroll speed on every reel
-      const seq = Array.from({ length: Math.max(...dur.map((_, k) => travel(k))) }, pick);   // shared row sequence → rows line up across reels
-      const rowA = pick(), rowB = pick();                                    // neighbours of the winning row
+      const seq = []; for (let i = 0, n = Math.max(...dur.map((_, k) => travel(k))); i < n; i++) seq.push(pickNot(seq[i - 1]));   // shared row sequence, no repeats back to back
+      const rowA = pickNot(...dur.map((_, k) => seq[travel(k) - 4])), rowB = pickNot(rowA);       // neighbours of the winning row: never the winner itself
       let done = 0;
       reels.forEach((r, k) => {
         const txt = p => p ? r.def.val(p) : '—';
