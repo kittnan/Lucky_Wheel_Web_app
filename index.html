@@ -296,6 +296,12 @@ ul.issues{margin:6px 0 0;padding-left:18px;font-size:13px;color:#ffb3b3;max-heig
 .od b{color:var(--gold-hi);font-variant-numeric:tabular-nums;min-width:4.6em;text-align:right}
 .od.out{opacity:.45}.od.out b{color:#999}
 .odds-f{margin-top:7px;font-size:11.5px;color:var(--muted)}
+/* hide-% toggle and collapsible draw-mode box */
+body.hide-rates .od b,body.hide-rates .rt{display:none}
+.ctrl-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ctrl-h label.t{margin:0}
+body.ctrl-collapsed .card.ctrl{gap:0}
+body.ctrl-collapsed .card.ctrl>:not(.ctrl-h){display:none}
 
 #countdown{position:fixed;inset:0;z-index:1040;display:none;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(circle,rgba(0,0,0,.25),rgba(0,0,0,.72));
   font-family:var(--head);font-weight:900;font-size:clamp(120px,32vw,420px);color:#ffe27a;text-shadow:0 6px 0 #5a3a00,0 0 60px rgba(255,200,40,.9)}
@@ -447,12 +453,13 @@ kbd{font-family:var(--body);font-size:.9em;padding:0 6px;border:1px solid rgba(2
       </div>
 
       <div class="card odds" id="odds">
-        <div class="odds-h"><span>PRIZE ODDS · LIVE</span><span class="row" style="gap:6px"><span class="secure">🔒 crypto.getRandomValues</span><button class="btn sm" id="btnOddsTest" title="Simulate 100,000 spins with the real random function">🧪 Verify</button><button class="btn sm" id="btnPeopleTest" title="Simulate picking people with the real random function and check everyone is picked equally often">👥 Verify people</button></span></div>
+        <div class="odds-h"><span>PRIZE ODDS · LIVE</span><span class="row" style="gap:6px"><span class="secure">🔒 crypto.getRandomValues</span><button class="btn sm" id="btnHideRates" title="Hide or show the % rates on screen (operator setting, the real rates do not change)">🙈 Hide %</button><button class="btn sm" id="btnOddsTest" title="Simulate 100,000 spins with the real random function">🧪 Verify</button><button class="btn sm" id="btnPeopleTest" title="Simulate picking people with the real random function and check everyone is picked equally often">👥 Verify people</button></span></div>
         <div id="oddsList"></div>
         <div class="odds-f">Chance per spin, right now. When a prize runs out the others are rescaled in the same proportion. Every spin is independent — no pity, no hidden adjustments.</div>
       </div>
 
       <div class="card ctrl">
+        <div class="ctrl-h"><label class="t">Draw Settings</label><button class="btn sm" id="btnCtrlToggle" aria-expanded="true" title="Collapse or expand the draw settings box">▲ Hide</button></div>
         <div><label class="t">Draw Mode</label>
           <div class="seg lock" id="modeSeg">
             <button data-mode="person-first" aria-pressed="true">🎰 Winner<br>then Prize</button>
@@ -689,7 +696,7 @@ const LS_KEY = 'luckyWheel.casino.v1';
 const PALETTE = ['#8B0000', '#141414', '#0B5D3B', '#a31515', '#222222', '#0e7a4d'];
 const S = {
   prizes: [], participants: [], history: [], nextPid: 1, skip: new Set(),
-  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false, wake: true, batch: 1, countdown: true }
+  settings: { mode: 'person-first', exclude: true, sound: true, quick: false, speed: 'normal', groupSize: 10, prizeChoice: 'random', title: 'LUCKY WHEEL', subtitle: 'Grand Prize Draw', theme: 'green', logo: '', autoBackup: false, wake: true, batch: 1, countdown: true, hideRates: false, ctrlCollapsed: false }
 };
 let storageWarned = false;
 let PRACTICE = null;              // JSON snapshot of real data while practice mode is on
@@ -737,7 +744,7 @@ function sanitizeLoaded(d) {
   if (!['green', 'royal', 'crimson', 'midnight'].includes(st.theme)) st.theme = 'green';
   st.title = String(st.title ?? '').slice(0, 40); st.subtitle = String(st.subtitle ?? '').slice(0, 60);
   if (typeof st.logo !== 'string' || !/^data:image\/(png|jpeg|webp|gif|svg\+xml);base64,/.test(st.logo) || st.logo.length > 400000) st.logo = '';
-  st.autoBackup = !!st.autoBackup; st.wake = st.wake !== false; st.countdown = st.countdown !== false; st.batch = Math.max(1, Math.min(100, Math.floor(Number(st.batch)) || 1));
+  st.autoBackup = !!st.autoBackup; st.wake = st.wake !== false; st.countdown = st.countdown !== false; st.hideRates = !!st.hideRates; st.ctrlCollapsed = !!st.ctrlCollapsed; st.batch = Math.max(1, Math.min(100, Math.floor(Number(st.batch)) || 1));
   return out;
 }
 // Deterministic demo data
@@ -1352,6 +1359,9 @@ function renderControls() {
   $('#selSpeed').value = S.settings.speed; $('#chkSound2').checked = S.settings.sound; $('#chkAutoBackup').checked = S.settings.autoBackup; $('#chkWake').checked = S.settings.wake; $('#chkCountdown').checked = S.settings.countdown; $('#batchN').value = S.settings.batch; $('#batchWrap').classList.toggle('hidden', S.settings.mode === 'group');
   applyBrand();
   $('#btnSound').textContent = S.settings.sound ? '🔊 Sound' : '🔇 Muted';
+  document.body.classList.toggle('hide-rates', !!S.settings.hideRates); $('#btnHideRates').textContent = S.settings.hideRates ? '👁 Show %' : '🙈 Hide %';
+  document.body.classList.toggle('ctrl-collapsed', !!S.settings.ctrlCollapsed);
+  $('#btnCtrlToggle').textContent = S.settings.ctrlCollapsed ? '▼ Show' : '▲ Hide'; $('#btnCtrlToggle').setAttribute('aria-expanded', String(!S.settings.ctrlCollapsed));
   SPD = S.settings.quick ? .35 : ({ quick: .35, normal: 1, long: 1.6 }[S.settings.speed] || 1);
 }
 function refreshAll() { renderPrizes(); renderDeptFilter(); renderPeople(); renderHistory(); renderStats(); renderControls(); Wheel.draw(); }
@@ -1524,7 +1534,7 @@ function winnerInner(person, prize, effRate, remainingAfter, actions) {
   return `${isJackpot(prize) ? '<div class="jp-ribbon">★ JACKPOT ★</div>' : ''}<div class="inv-top">${isJackpot(prize) ? '👑 JACKPOT WINNER! 👑' : '🎰 WINNER!'}</div><div class="inv-sub">Congratulations, you won…</div>
       <div class="inv-name">${esc(person.name)}</div><div class="inv-meta">${esc(person.id)}${person.dept ? ' · ' + esc(person.dept) : ''}</div>
       <div class="inv-won">— YOU WON —</div>${safeImg(prize.img) ? `<div class="inv-imgwrap"><div class="inv-img"><img src="${prize.img}" alt=""></div></div>` : ''}<div class="inv-prize">${esc(prize.name)}</div>
-      <span class="inv-rate">Drop rate ${fmtRate(effRate)}% · ${remainingAfter} left after this</span>${actions}`;
+      <span class="inv-rate"><span class="rt">Drop rate ${fmtRate(effRate)}% · </span>${remainingAfter} left after this</span>${actions}`;
 }
 function winnerCard(person, prize, effRate, remainingAfter, canRedraw, auto) {
   return new Promise(resolve => {
@@ -1550,7 +1560,7 @@ function groupCard(persons, prize, effRate, getMore) {
     ov.innerHTML = `<div class="invite wide" role="dialog" aria-modal="true"><div class="inv-top">🎰 WINNERS!</div>
       <div class="inv-sub">Congratulations! Each of these players wins:</div><div class="inv-prize" style="margin-bottom:10px">${safeImg(prize.img) ? `<span class="inv-img sm"><img src="${prize.img}" alt=""></span>` : ''}${esc(prize.name)}</div>
       <div class="tbl-wrap" style="text-align:left;max-height:46vh"><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Department</th><th>Present</th></tr></thead><tbody id="gBody"></tbody></table></div>
-      <div class="inv-rate" style="margin-top:12px">Drop rate ${fmtRate(effRate)}% · uncheck anyone who is absent, then “Redraw Absent”</div>
+      <div class="inv-rate" style="margin-top:12px"><span class="rt">Drop rate ${fmtRate(effRate)}% · </span>uncheck anyone who is absent, then “Redraw Absent”</div>
       <div class="acts"><button class="btn gold" data-a="confirm">✔ Confirm Winners</button><button class="btn" data-a="redraw">↻ Redraw Absent</button><button class="btn sm" data-a="discard">Discard</button></div><div class="kbd-hint"><kbd>Enter</kbd> confirm · <kbd>R</kbd> redraw absent</div></div>`;
     const body = $('#gBody', ov);
     const render = (anim) => {
@@ -1858,6 +1868,8 @@ $('#btnTplPrize').onclick = templatePrizes;
 $('#btnTplPeople').onclick = templatePeople;
 $('#btnExport').onclick = exportResults;
 $('#btnSim').onclick = runSimulation;
+$('#btnHideRates').onclick = () => { S.settings.hideRates = !S.settings.hideRates; save(); renderControls(); };
+$('#btnCtrlToggle').onclick = () => { S.settings.ctrlCollapsed = !S.settings.ctrlCollapsed; save(); renderControls(); };
 $('#btnOddsTest').onclick = () => { if (!busy) runSimulation(); };
 $('#btnPeopleTest').onclick = () => { if (!busy) runPeopleSimulation(); };
 $('#p-prizes').addEventListener('click', async e => {
