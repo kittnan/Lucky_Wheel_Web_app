@@ -302,6 +302,14 @@ body.hide-rates .od b,body.hide-rates .rt{display:none}
 .ctrl-h label.t{margin:0}
 body.ctrl-collapsed .card.ctrl{gap:0}
 body.ctrl-collapsed .card.ctrl>:not(.ctrl-h){display:none}
+/* draw settings hidden → the prize odds box grows to fill the column, with bigger rows */
+body.ctrl-collapsed #stage{align-items:stretch}
+body.ctrl-collapsed .odds{flex:1;display:flex;flex-direction:column;padding:16px 20px}
+body.ctrl-collapsed #oddsList{flex:1;align-content:space-evenly;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 24px}
+@media (max-width:600px){body.ctrl-collapsed #oddsList{grid-template-columns:minmax(0,1fr)}}
+body.ctrl-collapsed .od{font-size:clamp(14px,1.15vw,21px);padding:9px 0;gap:10px}
+body.ctrl-collapsed .od .sw{width:17px;height:17px}
+@media (max-width:1060px){body.ctrl-collapsed #stage{align-items:start}}
 
 #countdown{position:fixed;inset:0;z-index:1040;display:none;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(circle,rgba(0,0,0,.25),rgba(0,0,0,.72));
   font-family:var(--head);font-weight:900;font-size:clamp(120px,32vw,420px);color:#ffe27a;text-shadow:0 6px 0 #5a3a00,0 0 60px rgba(255,200,40,.9)}
